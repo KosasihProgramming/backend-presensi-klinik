@@ -28,10 +28,10 @@ module.exports = {
         type: Sequelize.STRING,
       },
       jam_masuk: {
-        type: Sequelize.TIME,
+        type: Sequelize.DATE,
       },
       jam_keluar: {
-        type: Sequelize.TIME,
+        type: Sequelize.DATE,
       },
       durasi: {
         type: Sequelize.INTEGER,
@@ -49,11 +49,11 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       createdAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE,
       },
       updatedAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE,
       },
     });
