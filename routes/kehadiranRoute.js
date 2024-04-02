@@ -34,7 +34,26 @@ router.get("/", function (req, res) {
 // Ambil semua data kehadiran hari ini
 router.get("/now", function (req, res, next) {
   const stringQuery =
-    "SELECT * FROM kehadiran WHERE foto_keluar IS NULL AND DATE(jam_masuk) = CURDATE()";
+    "SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, kehadiran.jam_masuk, kehadiran.foto_masuk FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id WHERE kehadiran.foto_keluar IS NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+
+  const query = "SELECT * FROM kehadiran WHERE ";
+
+  connection.query(stringQuery, (error, result) => {
+    if (error) {
+      console.log("Error executing query", error);
+      return;
+    }
+    console.log("Query result:", result);
+    res.json(result);
+  });
+});
+
+// Ambil data kepulangan hari ini
+router.get("/pulang/now", function (req, res, next) {
+  const stringQuery =
+    "SELECT pegawai.nama, kehadiran.barcode, kehadiran.id_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id WHERE kehadiran.foto_keluar IS NOT NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+
+  const query = "SELECT * FROM kehadiran WHERE ";
 
   connection.query(stringQuery, (error, result) => {
     if (error) {
