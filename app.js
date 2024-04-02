@@ -4,6 +4,7 @@ const path = require("path");
 
 const shift = require("./routes/shiftRoute");
 const kehadiran = require("./routes/kehadiranRoute");
+const barcode = require("./routes/barcodeRoute");
 
 const app = express();
 const port = 5000;
@@ -20,6 +21,7 @@ app.use("/uploads", express.static(uploadsPath));
 
 app.use("/shift", shift);
 app.use("/kehadiran", kehadiran);
+app.use("/barcode", barcode);
 // app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.listen(port, () => {

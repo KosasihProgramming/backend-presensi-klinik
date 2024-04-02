@@ -18,8 +18,23 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Ambil semua data kehadiran
-router.get("/", function (req, res, next) {
-  const stringQuery = "SELECT * FROM kehadiran WHERE foto_keluar IS NULL";
+router.get("/", function (req, res) {
+  const stringQuery = "SELECT * FROM kehadiran";
+
+  connection.query(stringQuery, (error, result) => {
+    if (error) {
+      console.log("Error executing query", error);
+      return;
+    }
+    console.log("Query result:", result);
+    res.json(result);
+  });
+});
+
+// Ambil semua data kehadiran hari ini
+router.get("/now", function (req, res, next) {
+  const stringQuery =
+    "SELECT * FROM kehadiran WHERE foto_keluar IS NULL AND DATE(jam_masuk) = CURDATE()";
 
   connection.query(stringQuery, (error, result) => {
     if (error) {
@@ -108,13 +123,10 @@ router.post("/", function (req, res, next) {
   });
 });
 
-// router.get("/:jam_pulang", function())
-
 // Absen pulang
 router.patch("/:id_kehadiran", function (req, res, next) {
   const { id_kehadiran } = req.params;
-  const { id_jadwal, id_detail_jadwal, id_shift, foto_keluar, durasi, lembur } =
-    req.body;
+  const { foto_keluar, durasi, lembur } = req.body;
 
   const base64Data = foto_keluar.replace(/^data:image\/\w+;base64,/, "");
   const buffer = Buffer.from(base64Data, "base64");
@@ -129,9 +141,6 @@ router.patch("/:id_kehadiran", function (req, res, next) {
     }
 
     const updateQuery = `UPDATE kehadiran SET 
-      id_jadwal = ${id_jadwal},
-      id_detail_jadwal = ${id_detail_jadwal},
-      id_shift = ${id_shift},
       foto_keluar = '${fileName}',
       jam_keluar = NOW(),
       durasi = TIMESTAMPDIFF(HOUR, jam_masuk, NOW()),
