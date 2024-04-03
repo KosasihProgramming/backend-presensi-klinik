@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 const port = 5000;
@@ -16,6 +17,9 @@ app.get("/", (req, res) => {
 
 app.use(cors());
 app.use(express.json());
+
+const uploadsPath = path.join(__dirname, "uploads");
+app.use("/uploads", express.static(uploadsPath));
 
 app.use("/shift", shift);
 app.use("/jadwal", jadwal);

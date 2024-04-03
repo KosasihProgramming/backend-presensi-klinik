@@ -87,4 +87,6 @@ router.delete("/delete/:idDetail", function (req, res, next) {
   });
 });
 
+// untuk looping detail jadwal berdasarkan barcode
+
 module.exports = router;

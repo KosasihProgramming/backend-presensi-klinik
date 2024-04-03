@@ -34,9 +34,9 @@ router.get("/", function (req, res) {
 // Ambil semua data kehadiran hari ini
 router.get("/now", function (req, res, next) {
   const stringQuery =
-    "SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, kehadiran.jam_masuk, kehadiran.foto_masuk FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id WHERE kehadiran.foto_keluar IS NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+    "SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.foto_masuk FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id JOIN shift ON kehadiran.id_shift = shift.id_shift WHERE kehadiran.foto_keluar IS NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
 
-  const query = "SELECT * FROM kehadiran WHERE ";
+  // const query = "SELECT * FROM kehadiran WHERE ";
 
   connection.query(stringQuery, (error, result) => {
     if (error) {
@@ -69,8 +69,10 @@ router.get("/pulang/now", function (req, res, next) {
 router.get("/:id_kehadiran", function (req, res) {
   const { id_kehadiran } = req.params;
 
-  const showQuery =
-    `SELECT * FROM kehadiran WHERE id_kehadiran = ` + id_kehadiran;
+  const showQuery = `SELECT kehadiran.*, shift.nama_shift, shift.jam_masuk AS jam_masuk_shift, shift.jam_pulang AS jam_keluar_shift
+  FROM kehadiran
+  JOIN shift ON kehadiran.id_shift = shift.id_shift
+  WHERE kehadiran.id_kehadiran = ${id_kehadiran}`;
 
   connection.query(showQuery, (error, result) => {
     if (error) {
@@ -136,8 +138,23 @@ router.post("/", function (req, res, next) {
         res.status(500).json({ error: "Internal Server Error" });
         return;
       }
-      console.log("New record created:", result);
-      res.status(201).json({ message: "Data berhasil ditambahkan" });
+      let isTelat = 0;
+      if (telat > 0) {
+        isTelat = 1;
+      } else {
+        isTelat = 0;
+      }
+      const updateQuery = `UPDATE detail_jadwal SET isHadir=1,isTelat=${isTelat} WHERE id = ${id_detail_jadwal}`;
+
+      connection.query(updateQuery, (error, result) => {
+        if (error) {
+          console.error("Error executing query:", error);
+          res.status(500).json({ error: "Internal Server Error" });
+          return;
+        }
+        console.log("New record created:", result);
+        res.status(201).json({ message: "Data berhasil ditambahkan" });
+      });
     });
   });
 });

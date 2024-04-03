@@ -3,9 +3,9 @@ const connection = require("../config/database");
 
 const router = express.Router();
 
-// Ambil semua data
-router.get("/data/", function (req, res, next) {
-  const stringQuery = "SELECT * FROM barcode";
+router.get("/:barcode", function (req, res, next) {
+  const { barcode } = req.params;
+  const stringQuery = `SELECT * FROM barcode WHERE barcode = ${barcode}`;
 
   connection.query(stringQuery, (error, result) => {
     if (error) {
@@ -17,99 +17,52 @@ router.get("/data/", function (req, res, next) {
   });
 });
 
-// ambil data berdasarkan id
-router.post("/add/", function (req, res, next) {
-  const { tanggalAwal, tanggalAkhir, bulan, tahun, barcode } = req.body;
+// mencari nama dokter
+router.get("/dokter/:id_kehadiran", function (req, res) {
+  const { id_kehadiran } = req.params;
+  const query = `
+    SELECT pegawai.nama, kehadiran.jam_masuk
+    FROM kehadiran
+    JOIN barcode ON kehadiran.barcode = barcode.barcode
+    JOIN pegawai ON barcode.id = pegawai.id
+    WHERE kehadiran.id_kehadiran = ?;
+  `;
 
-  const addQuery =
-    "insert into jadwal_kehadiran (tanggal_awal, tanggal_akhir, bulan,tahun, jumlahKehadiran,jumlah_shift, barcode, createdAt) values ('" +
-    tanggalAwal +
-    "','" +
-    tanggalAkhir +
-    "','" +
-    bulan +
-    "','" +
-    tahun +
-    "','0','0','" +
-    barcode +
-    "',CURDATE())";
-
-  connection.query(addQuery, (error, result) => {
+  connection.query(query, [id_kehadiran], (error, result) => {
     if (error) {
       console.log("Error executing query", error);
-      return;
+      return res.status(500).json({ error: "Internal Server Error" });
     }
     console.log("Query result:", result);
     res.json(result);
   });
 });
 
-// Insett data
-router.post("/", function (req, res, next) {
-  const { nama_shift, jam_masuk, jam_pulang, nominal } = req.body;
+router.get("/jadwal/:barcode", function (req, res) {
+  const { barcode } = req.params;
+  const query = `SELECT detail_jadwal.*, shift.nama_shift, shift.jam_masuk, shift.jam_pulang
+  FROM detail_jadwal
+  JOIN shift ON detail_jadwal.id_shift = shift.id_shift
+  JOIN jadwal_kehadiran ON detail_jadwal.id_jadwal = jadwal_kehadiran.id
+  JOIN barcode ON jadwal_kehadiran.barcode = barcode.barcode
+  WHERE barcode.barcode = ${barcode}
+  AND detail_jadwal.tanggal = CURDATE() AND detail_jadwal.isHadir = 0`;
 
-  const insertQuery = `INSERT INTO shift (nama_shift, jam_masuk, jam_pulang, nominal) 
-    VALUES (?, ?, ?, ?)`;
-
-  connection.query(
-    insertQuery,
-    [nama_shift, jam_masuk, jam_pulang, nominal],
-    (error, result) => {
-      if (error) {
-        console.error("Error executing query:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
-      }
-      console.log("New record created:", result);
-      res.status(201).json({ message: "Data berhasil ditambahkan" });
-    }
-  );
-});
-
-// Update data
-router.patch("/:id_shift", function (req, res, next) {
-  const { id_shift } = req.params;
-  const { nama_shift, jam_masuk, jam_pulang, nominal } = req.body;
-
-  const updateQuery =
-    "UPDATE shift SET nama_shift='" +
-    nama_shift +
-    "', jam_masuk='" +
-    jam_masuk +
-    "', jam_pulang='" +
-    jam_pulang +
-    "', nominal='" +
-    nominal +
-    "' WHERE id_shift=" +
-    id_shift;
-
-  connection.query(
-    updateQuery,
-    [nama_shift, jam_masuk, jam_pulang, nominal],
-    (error, result) => {
-      if (error) {
-        console.error("Error executing query:", error);
-        return res.status(500).json({ error: "Internal server error" });
-      }
-      console.log("Data updated successfully");
-      res.json({ message: "Data updated successfully" });
-    }
-  );
-});
-
-// hapus data
-router.delete("/:id_shift", function (req, res, next) {
-  const { id_shift } = req.params;
-
-  const deleteQuery = "DELETE FROM shift WHERE id_shift = " + id_shift;
-
-  connection.query(deleteQuery, [id_shift], (error, result) => {
+  connection.query(query, [barcode], (error, result) => {
     if (error) {
-      console.error("Error executing query:", error);
-      return res.status(500).json({ error: "Internal server error" });
+      console.log("Error executing query", error);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-    console.log("Data deleted successfully");
-    res.json({ message: "Data deleted successfully" });
+    const queryBarcode = `SELECT * FROM barcode WHERE barcode = ${barcode}`;
+
+    connection.query(queryBarcode, [barcode], (error, resultBarcode) => {
+      if (error) {
+        console.log("Error executing query", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+      console.log("Query result:", result);
+      res.json({ jadwal: result, barcode: resultBarcode });
+    });
   });
 });
 
