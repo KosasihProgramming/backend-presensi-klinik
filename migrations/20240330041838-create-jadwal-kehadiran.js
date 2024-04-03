@@ -10,6 +10,9 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
+      uid: {
+        type: Sequelize.STRING,
+      },
       tanggal_awal: {
         // Consider using Sequelize.DATE if storing full dates
         type: Sequelize.DATE, // Or Sequelize.DATE depending on your needs
