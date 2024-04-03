@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
-const port = 2000;
+const port = 5000;
 
 const shift = require("./routes/shiftRoute");
 const jadwal = require("./routes/JadwalRoute");
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use("/shift", shift);
 app.use("/jadwal", jadwal);
 app.use("/detail-jadwal", detail_jadwal);
-app.use("/barcode", barcode);
+// app.use("/barcode", barcode);
 app.use("/pegawai", pegawai);
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
