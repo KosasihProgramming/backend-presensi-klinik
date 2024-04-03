@@ -7,7 +7,7 @@ const port = 2000;
 const shift = require("./routes/shiftRoute");
 const jadwal = require("./routes/JadwalRoute");
 const detail_jadwal = require("./routes/DetailjadwalRoute");
-const barcode = require("./routes/BarcodeRoute");
+// const barcode = require("./routes/BarcodeRoute");
 const pegawai = require("./routes/PegawaiRoute");
 app.get("/", (req, res) => {
   res.send("Web API untuk absensi");
