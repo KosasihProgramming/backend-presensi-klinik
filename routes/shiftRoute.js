@@ -37,22 +37,26 @@ router.get("/:id_shift", function (req, res, next) {
 router.post("/", function (req, res, next) {
   const { nama_shift, jam_masuk, jam_pulang, nominal } = req.body;
 
-  const insertQuery = `INSERT INTO shift (nama_shift, jam_masuk, jam_pulang, nominal) 
-    VALUES (?, ?, ?, ?)`;
+  const insertQuery =
+    "INSERT INTO shift (nama_shift, jam_masuk, jam_pulang, nominal, createdAt, updatedAt) VALUES ('" +
+    nama_shift +
+    "', '" +
+    jam_masuk +
+    "', '" +
+    jam_pulang +
+    "', '" +
+    nominal +
+    "', NOW(), NOW())";
 
-  connection.query(
-    insertQuery,
-    [nama_shift, jam_masuk, jam_pulang, nominal],
-    (error, result) => {
-      if (error) {
-        console.error("Error executing query:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
-      }
-      console.log("New record created:", result);
-      res.status(201).json({ message: "Data berhasil ditambahkan" });
+  connection.query(insertQuery, (error, result) => {
+    if (error) {
+      console.error("Error executing query:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+      return;
     }
-  );
+    console.log("New record created:", result);
+    res.status(201).json({ message: "Data berhasil ditambahkan" });
+  });
 });
 
 // Update data

@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Ambil semua data
 router.get("/data/", function (req, res, next) {
-  const stringQuery = "SELECT * FROM barcode";
+  const stringQuery = "SELECT * FROM pegawai";
 
   connection.query(stringQuery, (error, result) => {
     if (error) {

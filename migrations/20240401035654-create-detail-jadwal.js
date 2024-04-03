@@ -2,63 +2,48 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("kehadiran", {
-      id_kehadiran: {
+    await queryInterface.createTable("detail_jadwal", {
+      id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      barcode: {
-        type: Sequelize.INTEGER,
-      },
       id_jadwal: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       id_detail_jadwal: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       id_shift: {
-        type: Sequelize.INTEGER,
-      },
-      foto_masuk: {
         type: Sequelize.STRING,
       },
-      foto_keluar: {
-        type: Sequelize.STRING,
-      },
-      jam_masuk: {
+      tanggal: {
         type: Sequelize.DATE,
       },
-      jam_keluar: {
-        type: Sequelize.DATE,
-      },
-      durasi: {
-        type: Sequelize.INTEGER,
-      },
-      telat: {
-        type: Sequelize.INTEGER,
-      },
-      denda_telat: {
-        type: Sequelize.INTEGER,
-      },
-      is_pindah_klinik: {
+      isHadir: {
         type: Sequelize.BOOLEAN,
       },
-      lembur: {
+      isTelat: {
+        type: Sequelize.BOOLEAN,
+      },
+      isPulangCepat: {
+        type: Sequelize.BOOLEAN,
+      },
+      nominal: {
         type: Sequelize.INTEGER,
       },
       createdAt: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.DATE,
       },
       updatedAt: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.DATE,
       },
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("kehadiran");
+    await queryInterface.dropTable("detail_jadwal");
   },
 };
