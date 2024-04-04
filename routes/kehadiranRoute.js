@@ -50,8 +50,11 @@ router.get("/now", function (req, res, next) {
 
 // Ambil data kepulangan hari ini
 router.get("/pulang/now", function (req, res, next) {
+  // const stringQuery =
+  //   "SELECT pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id WHERE kehadiran.foto_keluar IS NOT NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+
   const stringQuery =
-    "SELECT pegawai.nama, kehadiran.barcode, kehadiran.id_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id WHERE kehadiran.foto_keluar IS NOT NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+    "SELECT pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id JOIN shift ON kehadiran.id_shift = shift.id_shift -- Tambahkan operasi JOIN pada tabel shift WHERE kehadiran.foto_keluar IS NOT NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
 
   const query = "SELECT * FROM kehadiran WHERE ";
 
@@ -162,7 +165,7 @@ router.post("/", function (req, res, next) {
 // Absen pulang
 router.patch("/:id_kehadiran", function (req, res, next) {
   const { id_kehadiran } = req.params;
-  const { foto_keluar, durasi, lembur } = req.body;
+  const { foto_keluar, jam_masuk, durasi, lembur } = req.body;
 
   const base64Data = foto_keluar.replace(/^data:image\/\w+;base64,/, "");
   const buffer = Buffer.from(base64Data, "base64");
@@ -176,12 +179,19 @@ router.patch("/:id_kehadiran", function (req, res, next) {
       return res.status(500).json({ message: "Gagal menyimpan foto" });
     }
 
-    const updateQuery = `UPDATE kehadiran SET 
-      foto_keluar = '${fileName}',
-      jam_keluar = NOW(),
-      durasi = TIMESTAMPDIFF(HOUR, jam_masuk, NOW()),
-      lembur = 1
-      WHERE id_kehadiran = '${id_kehadiran}'`;
+    const dateTimeString = "2024-04-04T01:00:00.000Z";
+    const date = new Date(dateTimeString);
+
+    const year = date.getFullYear();
+    const month = ("0" + (date.getMonth() + 1)).slice(-2);
+    const day = ("0" + date.getDate()).slice(-2);
+    const hours = ("0" + date.getHours()).slice(-2);
+    const minutes = ("0" + date.getMinutes()).slice(-2);
+    const seconds = ("0" + date.getSeconds()).slice(-2);
+
+    const jamMasukBaru = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+    const updateQuery = `UPDATE kehadiran SET foto_keluar = '${fileName}', jam_masuk = '${jamMasukBaru}', jam_keluar = NOW(), durasi = TIMESTAMPDIFF(MINUTE, '${jamMasukBaru}', NOW()), lembur = 0 WHERE id_kehadiran = '${id_kehadiran}';`;
 
     connection.query(updateQuery, (error, result) => {
       if (error) {
