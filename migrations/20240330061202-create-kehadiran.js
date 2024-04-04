@@ -45,6 +45,9 @@ module.exports = {
       is_pindah_klinik: {
         type: Sequelize.BOOLEAN,
       },
+      is_lanjut_shift: {
+        type: Sequelize.BOOLEAN,
+      },
       lembur: {
         type: Sequelize.INTEGER,
       },

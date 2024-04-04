@@ -102,6 +102,7 @@ router.post("/", function (req, res, next) {
     telat,
     denda_telat,
     is_pindah_klinik,
+    is_lanjut_shift,
     lembur,
   } = req.body;
 
@@ -117,7 +118,7 @@ router.post("/", function (req, res, next) {
       res.status(500).json({ message: "Gagal menyimpan foto" });
     }
     const insertQuery =
-      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik) VALUES ('" +
+      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift) VALUES ('" +
       barcode +
       "','" +
       id_jadwal +
@@ -133,6 +134,8 @@ router.post("/", function (req, res, next) {
       denda_telat +
       "','" +
       is_pindah_klinik +
+      "','" +
+      is_lanjut_shift +
       "')";
 
     connection.query(insertQuery, (error, result) => {
