@@ -2,35 +2,32 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("detail_jadwal", {
+    await queryInterface.createTable("rekap_insentif_shift", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      id_jadwal: {
-        type: Sequelize.STRING,
-      },
-      id_detail_jadwal: {
-        type: Sequelize.STRING,
-      },
-      id_shift: {
-        type: Sequelize.STRING,
-      },
       tanggal: {
         type: Sequelize.STRING,
       },
-      isHadir: {
-        type: Sequelize.BOOLEAN,
+      nama_shift: {
+        type: Sequelize.STRING,
       },
-      isTelat: {
-        type: Sequelize.BOOLEAN,
+      nama_dokter: {
+        type: Sequelize.STRING,
       },
-      isPulangCepat: {
-        type: Sequelize.BOOLEAN,
+      insentif: {
+        type: Sequelize.INTEGER,
       },
-      nominal: {
+      nominal_shift: {
+        type: Sequelize.INTEGER,
+      },
+      total_gaji: {
+        type: Sequelize.INTEGER,
+      },
+      kekurangan_garansi_fee: {
         type: Sequelize.INTEGER,
       },
       createdAt: {
@@ -44,6 +41,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("detail_jadwal");
+    await queryInterface.dropTable("rekap_insentif_shift");
   },
 };

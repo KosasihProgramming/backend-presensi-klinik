@@ -31,10 +31,10 @@ router.get("/", function (req, res) {
   });
 });
 
-// Ambil semua data kehadiran hari ini
+// Ambil semua data kehadiran yang belum pulang
 router.get("/now", function (req, res, next) {
   const stringQuery =
-    "SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.foto_masuk FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id JOIN shift ON kehadiran.id_shift = shift.id_shift WHERE kehadiran.foto_keluar IS NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+    "SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.foto_masuk FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id JOIN shift ON kehadiran.id_shift = shift.id_shift WHERE kehadiran.foto_keluar IS NULL";
 
   // const query = "SELECT * FROM kehadiran WHERE ";
 
@@ -49,14 +49,37 @@ router.get("/now", function (req, res, next) {
 });
 
 // Ambil data kepulangan hari ini
-router.get("/pulang/now", function (req, res, next) {
-  // const stringQuery =
-  //   "SELECT pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id WHERE kehadiran.foto_keluar IS NOT NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+router.get("/pulang/all", function (req, res, next) {
+  const stringQuery = `SELECT kehadiran.id_detail_jadwal, detail_jadwal.tanggal, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar 
+  FROM kehadiran 
+  JOIN barcode ON kehadiran.barcode = barcode.barcode 
+  JOIN pegawai ON barcode.id = pegawai.id 
+  JOIN shift ON kehadiran.id_shift = shift.id_shift 
+  JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
+  WHERE kehadiran.foto_keluar IS NOT NULL AND detail_jadwal.tanggal = CURDATE();`;
 
-  const stringQuery =
-    "SELECT pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id JOIN shift ON kehadiran.id_shift = shift.id_shift -- Tambahkan operasi JOIN pada tabel shift WHERE kehadiran.foto_keluar IS NOT NULL AND DATE(kehadiran.jam_masuk) = CURDATE()";
+  // const query = "SELECT * FROM kehadiran WHERE ";
 
-  const query = "SELECT * FROM kehadiran WHERE ";
+  connection.query(stringQuery, (error, result) => {
+    if (error) {
+      console.log("Error executing query", error);
+      return;
+    }
+    console.log("Query result:", result);
+    res.json(result);
+  });
+});
+
+// Filter tanggal
+router.get("/filter/:tanggal", function (req, res, next) {
+  const { tanggal } = req.params;
+  const stringQuery = `SELECT kehadiran.id_detail_jadwal, detail_jadwal.tanggal, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar 
+  FROM kehadiran 
+  JOIN barcode ON kehadiran.barcode = barcode.barcode 
+  JOIN pegawai ON barcode.id = pegawai.id 
+  JOIN shift ON kehadiran.id_shift = shift.id_shift 
+  JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
+  WHERE kehadiran.foto_keluar IS NOT NULL AND detail_jadwal.tanggal = "${tanggal}"`;
 
   connection.query(stringQuery, (error, result) => {
     if (error) {
@@ -170,6 +193,25 @@ router.patch("/:id_kehadiran", function (req, res, next) {
   const { id_kehadiran } = req.params;
   const { foto_keluar, jam_masuk, durasi, lembur } = req.body;
 
+  const sendMessageToTelegram = async (message) => {
+    const botToken = "6450512353:AAEPzql6mikTouuEse_S_GhzA7XlmC1lNgE";
+    const chatId = "1391434253";
+
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const params = new URLSearchParams({
+      chat_id: chatId,
+      text: message,
+    });
+
+    try {
+      const response = await fetch(`${url}?${params.toString()}`);
+      const data = await response.json();
+      console.log("Message sent:", data);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
   const base64Data = foto_keluar.replace(/^data:image\/\w+;base64,/, "");
   const buffer = Buffer.from(base64Data, "base64");
 
@@ -182,7 +224,7 @@ router.patch("/:id_kehadiran", function (req, res, next) {
       return res.status(500).json({ message: "Gagal menyimpan foto" });
     }
 
-    const dateTimeString = "2024-04-04T01:00:00.000Z";
+    const dateTimeString = jam_masuk;
     const date = new Date(dateTimeString);
 
     const year = date.getFullYear();
@@ -194,13 +236,83 @@ router.patch("/:id_kehadiran", function (req, res, next) {
 
     const jamMasukBaru = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
-    const updateQuery = `UPDATE kehadiran SET foto_keluar = '${fileName}', jam_masuk = '${jamMasukBaru}', jam_keluar = NOW(), durasi = TIMESTAMPDIFF(MINUTE, '${jamMasukBaru}', NOW()), lembur = 0 WHERE id_kehadiran = '${id_kehadiran}';`;
+    const updateQuery = `UPDATE kehadiran SET foto_keluar = '${fileName}', jam_keluar = NOW(), durasi = TIMESTAMPDIFF(MINUTE, '${jamMasukBaru}', NOW()), lembur = 0 WHERE id_kehadiran = '${id_kehadiran}';`;
 
     connection.query(updateQuery, (error, result) => {
       if (error) {
         console.error("Error executing query:", error);
         return res.status(500).json({ error: "Internal Server Error" });
       }
+
+      const selectQuery = `SELECT 
+      kehadiran.id_detail_jadwal, 
+      kehadiran.barcode, 
+      pegawai.nama, 
+      kehadiran.jam_keluar, 
+      kehadiran.id_shift, 
+      shift.jam_pulang,
+      shift.nominal,
+      setting.nama_instansi FROM kehadiran
+      JOIN shift ON kehadiran.id_shift = shift.id_shift
+      JOIN barcode ON kehadiran.barcode = barcode.barcode
+      JOIN pegawai ON barcode.id = pegawai.id
+      CROSS JOIN setting
+      WHERE kehadiran.id_kehadiran = ${id_kehadiran};
+  `;
+
+      connection.query(selectQuery, (error, resultSelect) => {
+        if (error) {
+          console.error("Error executing query:", error);
+          res.status(500).json({ error: "Internal Server Error" });
+          return;
+        }
+        const namaInstansi = resultSelect[0].nama_instansi;
+        console.log(selectQuery);
+        console.log({ data: resultSelect[0] });
+        const dateString = resultSelect[0].jam_keluar;
+        const date = new Date(dateString);
+        const jam = date.getHours();
+        const menit = date.getMinutes();
+        const detik = date.getSeconds();
+        console.log(`Jam: ${jam}, Menit: ${menit}, Detik: ${detik}`);
+
+        const id_detail_jadwal = resultSelect[0].id_detail_jadwal;
+        const jam_absen_pulang = `${jam}:${menit}:${detik}`;
+        const jam_pulang = resultSelect[0].jam_pulang;
+
+        // Pisahkan jam, menit, dan detik untuk setiap waktu
+        const [jam1, menit1, detik1] = jam_absen_pulang.split(":").map(Number);
+        const [jam2, menit2, detik2] = jam_pulang.split(":").map(Number);
+
+        // Konversi waktu menjadi total menit
+        const totalMenit1 = jam1 * 60 + menit1 + detik1 / 60;
+        const totalMenit2 = jam2 * 60 + menit2 + detik2 / 60;
+
+        // Hitung selisih waktu dalam menit
+        const selisihMenit = totalMenit2 - totalMenit1;
+
+        const nama = resultSelect[0].nama;
+        const nominal = resultSelect[0].nominal;
+
+        let isPulangCepat = 0;
+        if (selisihMenit <= 0) {
+          isPulangCepat = 0;
+        } else {
+          isPulangCepat = 1;
+          const message = `${nama} pulang cepat sebelum jadwal di ${namaInstansi}`;
+          sendMessageToTelegram(message);
+        }
+
+        const updateQuery = `UPDATE detail_jadwal SET isPulangCepat=${isPulangCepat}, nominal=${nominal} WHERE id = ${id_detail_jadwal}`;
+
+        connection.query(updateQuery, (error, resultUpdateIsPulangCepet) => {
+          if (error) {
+            console.error("Error executing query:", error);
+            res.status(500).json({ error: "Internal Server Error" });
+            return;
+          }
+        });
+      });
       console.log("Record updated successfully:", result);
       res.status(200).json({ message: "Data berhasil diperbarui" });
     });
