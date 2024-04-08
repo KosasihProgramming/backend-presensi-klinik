@@ -8,74 +8,90 @@ const queryDeleteData = () => {
   return query;
 };
 
-const selectInsentifRawatJalanDr = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(rawat_jl_dr.tarif_tindakandr) as total from reg_periksa inner join rawat_jl_dr on rawat_jl_dr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi between '${tanggalAwal}' and ${tanggalAkhir} and rawat_jl_dr.tarif_tindakandr>0`;
-
-  return query;
-};
-
-const selectInsentifRawatJalanDrPr = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(rawat_jl_drpr.tarif_tindakandr) as total from reg_periksa inner join rawat_jl_drpr on rawat_jl_drpr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi between '${tanggalAwal}' and '${tanggalAkhir}' and rawat_jl_drpr.tarif_tindakandr>0`;
+const selectInsentifRawatJalanDr = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(rawat_jl_dr.tarif_tindakandr) as total from reg_periksa inner join rawat_jl_dr on rawat_jl_dr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and rawat_jl_dr.tarif_tindakandr>0`;
 
   return query;
 };
 
-const selectInsentifRawatInapDr = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(rawat_inap_dr.tarif_tindakandr) as total from rawat_inap_dr inner join reg_periksa on rawat_inap_dr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where rawat_inap_dr.tgl_perawatan between ${tanggalAwal} and ${tanggalAkhir} and rawat_inap_dr.tarif_tindakandr>0`;
-
-  return query;
-};
-
-const selectInsentifRawatInapDrPr = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(rawat_inap_drpr.tarif_tindakandr) as total from rawat_inap_drpr inner join reg_periksa on rawat_inap_drpr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where rawat_inap_drpr.tgl_perawatan between '${tanggalAwal}' and '${tanggalAkhir}'  and concat(reg_periksa.kd_pj,penjab.png_jawab) like '%BPJBPJS%' and rawat_inap_drpr.tarif_tindakandr>0`;
+const selectInsentifRawatJalanDrPr = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(rawat_jl_drpr.tarif_tindakandr) as total from reg_periksa inner join rawat_jl_drpr on rawat_jl_drpr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and rawat_jl_drpr.tarif_tindakandr>0`;
 
   return query;
 };
 
-const selectInsentifPeriksaLab = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(periksa_lab.tarif_tindakan_dokter) as total from periksa_lab inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where periksa_lab.tgl_periksa between '${tanggalAwal}' and '${tanggalAkhir}' and concat(reg_periksa.kd_pj,penjab.png_jawab) like '%BPJBPJS%' and periksa_lab.tarif_tindakan_dokter>0`;
-
-  return query;
-};
-
-const selectInsentifDetailPeriksaLab = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(detail_periksa_lab.bagian_dokter) as total from detail_periksa_lab inner join periksa_lab on periksa_lab.no_rawat=detail_periksa_lab.no_rawat and periksa_lab.kd_jenis_prw=detail_periksa_lab.kd_jenis_prw and periksa_lab.tgl_periksa=detail_periksa_lab.tgl_periksa and periksa_lab.jam=detail_periksa_lab.jam inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where detail_periksa_lab.tgl_periksa between '${tanggalAwal}' and '${tanggalAkhir}' and concat(reg_periksa.kd_pj,penjab.png_jawab) like '%BPJBPJS%' and detail_periksa_lab.bagian_dokter>0`;
+const selectInsentifRawatInapDr = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(rawat_inap_dr.tarif_tindakandr) as total from rawat_inap_dr inner join reg_periksa on rawat_inap_dr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and rawat_inap_dr.tarif_tindakandr>0`;
 
   return query;
 };
 
-const selectInsentifTarifPeriksaLab = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
-
-  const query = `select sum(periksa_lab.tarif_perujuk) as total from periksa_lab inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where periksa_lab.tgl_periksa between '${tanggalAwal}' and '${tanggalAkhir}' and concat(reg_periksa.kd_pj,penjab.png_jawab) like '%BPJBPJS%' and periksa_lab.tarif_perujuk>0`;
+const selectInsentifRawatInapDrPr = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(rawat_inap_drpr.tarif_tindakandr) as total from rawat_inap_drpr inner join reg_periksa on rawat_inap_drpr.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and rawat_inap_drpr.tarif_tindakandr>0`;
 
   return query;
 };
 
-const selectInsentifDetailTarifPeriksaLab = (bulan, tahun) => {
-  const tanggalAwal = `${tahun}-${bulan}-01`;
-  const tanggalAkhir = `${tahun}-${bulan}-31`;
+const selectInsentifPeriksaLab = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(periksa_lab.tarif_tindakan_dokter) as total from periksa_lab inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and periksa_lab.tarif_tindakan_dokter>0`;
 
-  const query = `select sum(detail_periksa_lab.bagian_perujuk) as total from detail_periksa_lab inner join periksa_lab on periksa_lab.no_rawat=detail_periksa_lab.no_rawat and periksa_lab.kd_jenis_prw=detail_periksa_lab.kd_jenis_prw and periksa_lab.tgl_periksa=detail_periksa_lab.tgl_periksa and periksa_lab.jam=detail_periksa_lab.jam inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where detail_periksa_lab.tgl_periksa between '${tanggalAwal}' and '${tanggalAkhir}' and concat(reg_periksa.kd_pj,penjab.png_jawab) like '%BPJBPJS%' and detail_periksa_lab.bagian_perujuk>0`;
+  return query;
+};
+
+const selectInsentifDetailPeriksaLab = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(detail_periksa_lab.bagian_dokter) as total from detail_periksa_lab inner join periksa_lab on periksa_lab.no_rawat=detail_periksa_lab.no_rawat and periksa_lab.kd_jenis_prw=detail_periksa_lab.kd_jenis_prw and periksa_lab.tgl_periksa=detail_periksa_lab.tgl_periksa and periksa_lab.jam=detail_periksa_lab.jam inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and detail_periksa_lab.bagian_dokter>0`;
+
+  return query;
+};
+
+const selectInsentifTarifPeriksaLab = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(periksa_lab.tarif_perujuk) as total from periksa_lab inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and periksa_lab.tarif_perujuk>0`;
+
+  return query;
+};
+
+const selectInsentifDetailTarifPeriksaLab = (
+  tanggal,
+  kd_dokter,
+  jam_masuk,
+  jam_keluar
+) => {
+  const query = `select sum(detail_periksa_lab.bagian_perujuk) as total from detail_periksa_lab inner join periksa_lab on periksa_lab.no_rawat=detail_periksa_lab.no_rawat and periksa_lab.kd_jenis_prw=detail_periksa_lab.kd_jenis_prw and periksa_lab.tgl_periksa=detail_periksa_lab.tgl_periksa and periksa_lab.jam=detail_periksa_lab.jam inner join reg_periksa on periksa_lab.no_rawat=reg_periksa.no_rawat inner join penjab on reg_periksa.kd_pj=penjab.kd_pj where reg_periksa.tgl_registrasi = '${tanggal}' and rawat_jl_dr.kd_dokter='${kd_dokter}' and reg_periksa.jam_reg BETWEEN '${jam_masuk}' and '${jam_keluar}' and detail_periksa_lab.bagian_perujuk>0`;
 
   return query;
 };
@@ -152,6 +168,9 @@ router.post("/nominal", function (req, res, next) {
   const stringQuery = `SELECT 
     detail_jadwal.tanggal,
     shift.nama_shift,
+    shift.jam_masuk,
+    shift.jam_pulang,
+    pegawai.nik,
     pegawai.nama,
     detail_jadwal.nominal FROM kehadiran
     JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
@@ -165,8 +184,104 @@ router.post("/nominal", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    res.json(result);
+
+    // console.log(stringQuery);
     console.log(result);
+    // const tanggal = result[0].tanggal;
+    // const jam_masuk = result[0].jam_masuk;
+    // const jam_keluar = result[0].jam_pulang;
+    // const kd_dokter = result[0].nik;
+    // const query1 = selectInsentifRawatJalanDr(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query2 = selectInsentifRawatJalanDrPr(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query3 = selectInsentifRawatInapDr(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query4 = selectInsentifRawatInapDrPr(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query5 = selectInsentifPeriksaLab(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query6 = selectInsentifDetailPeriksaLab(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query7 = selectInsentifTarifPeriksaLab(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+    // const query8 = selectInsentifDetailTarifPeriksaLab(
+    //   tanggal,
+    //   kd_dokter,
+    //   jam_masuk,
+    //   jam_keluar
+    // );
+
+    // const querySelectInsentif = [
+    //   query1,
+    //   query2,
+    //   query3,
+    //   query4,
+    //   query5,
+    //   query6,
+    //   query7,
+    //   query8,
+    // ];
+
+    // var totalInsentif = 0;
+    // var processedQueries = 0;
+
+    // querySelectInsentif.forEach((query, index) => {
+    //   connection.query(query, function (error, results, fields) {
+    //     if (error) {
+    //       console.error("Error executing query:", error);
+    //       return connection.rollback(function () {
+    //         console.error("Error rolling back transaction:", error);
+    //         throw error;
+    //       });
+    //     }
+
+    //     console.log("result: ", results);
+
+    //     if (results[0].total != null) {
+    //       console.log("index 0", results[0].total);
+    //       totalInsentif = totalInsentif + parseInt(results[0].total);
+    //       console.log("parse int: ", parseInt(results));
+    //     }
+
+    //     processedQueries++;
+
+    //     console.log(totalInsentif, "total insentif");
+    //     console.log(results[0], "result index 0");
+    //     // Jika semua query telah diproses, kirim respons
+    //     if (processedQueries === querySelectInsentif.length) {
+    //       res.json(totalInsentif);
+    //     }
+    //   });
+    // });
   });
 });
 
