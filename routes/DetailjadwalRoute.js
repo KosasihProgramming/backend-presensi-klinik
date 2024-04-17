@@ -82,6 +82,7 @@ router.delete("/delete/:idDetail", function (req, res, next) {
       console.error("Error executing query:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
+    const deleteKehadiran = `DELETE FROM kehadiran WHERE id_detail_jadwal = ${idDetail}`;
     console.log("Data deleted successfully");
     res.json({ message: "Data deleted successfully" });
   });

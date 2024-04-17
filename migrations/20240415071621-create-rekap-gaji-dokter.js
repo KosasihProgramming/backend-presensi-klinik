@@ -2,15 +2,12 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("rekap_insentif_shift", {
+    await queryInterface.createTable("rekap_gaji_dokter", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
-      },
-      tanggal: {
-        type: Sequelize.STRING,
       },
       bulan: {
         type: Sequelize.STRING,
@@ -18,47 +15,39 @@ module.exports = {
       tahun: {
         type: Sequelize.STRING,
       },
-      nama_shift: {
-        type: Sequelize.STRING,
-      },
       nama_dokter: {
         type: Sequelize.STRING,
       },
-      insentif: {
+      total_data_insentif: {
         type: Sequelize.INTEGER,
       },
-      nominal_shift: {
+      total_insentif: {
         type: Sequelize.INTEGER,
       },
-      total_gaji: {
+      total_data_nominal: {
         type: Sequelize.INTEGER,
       },
-      kekurangan_garansi_fee: {
+      total_nominal: {
         type: Sequelize.INTEGER,
       },
-      garansi_fee: {
+      total_garansi_fee: {
         type: Sequelize.INTEGER,
       },
-      barcode: {
-        type: Sequelize.STRING,
-      },
-      denda_telat: {
+      total_denda_telat: {
         type: Sequelize.INTEGER,
       },
-      nama_dokter_pengganti: {
-        type: Sequelize.STRING,
+      pajak: {
+        type: Sequelize.INTEGER,
       },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
+      total_gaji_periode: {
+        type: Sequelize.INTEGER,
       },
-      updatedAt: {
-        allowNull: true,
-        type: Sequelize.DATE,
+      gaji_akhir: {
+        type: Sequelize.INTEGER,
       },
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("rekap_insentif_shift");
+    await queryInterface.dropTable("rekap_gaji_dokter");
   },
 };

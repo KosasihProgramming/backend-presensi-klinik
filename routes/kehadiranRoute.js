@@ -126,6 +126,8 @@ router.post("/", function (req, res, next) {
     denda_telat,
     is_pindah_klinik,
     is_lanjut_shift,
+    is_dokter_pengganti,
+    nama_dokter_pengganti,
     lembur,
   } = req.body;
 
@@ -141,7 +143,7 @@ router.post("/", function (req, res, next) {
       res.status(500).json({ message: "Gagal menyimpan foto" });
     }
     const insertQuery =
-      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift) VALUES ('" +
+      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti) VALUES ('" +
       barcode +
       "','" +
       id_jadwal +
@@ -159,6 +161,10 @@ router.post("/", function (req, res, next) {
       is_pindah_klinik +
       "','" +
       is_lanjut_shift +
+      "','" +
+      is_dokter_pengganti +
+      "','" +
+      nama_dokter_pengganti +
       "')";
 
     connection.query(insertQuery, (error, result) => {
@@ -236,7 +242,7 @@ router.patch("/:id_kehadiran", function (req, res, next) {
 
     const jamMasukBaru = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
-    const updateQuery = `UPDATE kehadiran SET foto_keluar = '${fileName}', jam_keluar = NOW(), durasi = TIMESTAMPDIFF(MINUTE, '${jamMasukBaru}', NOW()), lembur = 0 WHERE id_kehadiran = '${id_kehadiran}';`;
+    const updateQuery = `UPDATE kehadiran k JOIN shift s ON k.id_shift = s.id_shift SET k.foto_keluar = '${fileName}', k.jam_keluar = NOW(), k.durasi = TIMESTAMPDIFF(MINUTE, s.jam_masuk, s.jam_pulang), k.lembur = 0 WHERE k.id_kehadiran = '${id_kehadiran}';`;
 
     connection.query(updateQuery, (error, result) => {
       if (error) {

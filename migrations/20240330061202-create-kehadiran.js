@@ -48,6 +48,12 @@ module.exports = {
       is_lanjut_shift: {
         type: Sequelize.BOOLEAN,
       },
+      is_dokter_pengganti: {
+        type: Sequelize.BOOLEAN,
+      },
+      nama_dokter_pengganti: {
+        type: Sequelize.STRING,
+      },
       lembur: {
         type: Sequelize.INTEGER,
       },

@@ -118,8 +118,16 @@ router.delete("/delete/:idJadwal", function (req, res, next) {
       console.error("Error executing query:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
-    console.log("Data deleted successfully");
-    res.json({ message: "Data deleted successfully" });
+
+    const deleteAllDetailJadwal = `DELETE FROM detail_jadwal WHERE id_jadwal = ${idJadwal}`;
+    connection.query(deleteAllDetailJadwal, [idJadwal], (error, result) => {
+      if (error) {
+        console.error("Error executing query:", error);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+      console.log("Data deleted successfully");
+      res.json({ message: "Data deleted successfully" });
+    });
   });
 });
 

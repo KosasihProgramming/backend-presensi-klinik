@@ -26,6 +26,8 @@ module.exports = (sequelize, DataTypes) => {
       denda_telat: DataTypes.INTEGER,
       is_pindah_klinik: DataTypes.BOOLEAN,
       is_lanjut_shift: DataTypes.BOOLEAN,
+      is_dokter_pengganti: DataTypes.BOOLEAN,
+      nama_dokter_pengganti: DataTypes.STRING,
       lembur: DataTypes.INTEGER,
     },
     {

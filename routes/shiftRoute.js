@@ -35,10 +35,10 @@ router.get("/:id_shift", function (req, res, next) {
 
 // Insett data
 router.post("/", function (req, res, next) {
-  const { nama_shift, jam_masuk, jam_pulang, nominal } = req.body;
+  const { nama_shift, jam_masuk, jam_pulang, nominal, garansi_fee } = req.body;
 
   const insertQuery =
-    "INSERT INTO shift (nama_shift, jam_masuk, jam_pulang, nominal, createdAt, updatedAt) VALUES ('" +
+    "INSERT INTO shift (nama_shift, jam_masuk, jam_pulang, nominal, garansi_fee, createdAt, updatedAt) VALUES ('" +
     nama_shift +
     "', '" +
     jam_masuk +
@@ -46,6 +46,8 @@ router.post("/", function (req, res, next) {
     jam_pulang +
     "', '" +
     nominal +
+    "', '" +
+    garansi_fee +
     "', NOW(), NOW())";
 
   connection.query(insertQuery, (error, result) => {
@@ -62,7 +64,7 @@ router.post("/", function (req, res, next) {
 // Update data
 router.patch("/:id_shift", function (req, res, next) {
   const { id_shift } = req.params;
-  const { nama_shift, jam_masuk, jam_pulang, nominal } = req.body;
+  const { nama_shift, jam_masuk, jam_pulang, nominal, garansi_fee } = req.body;
 
   const updateQuery =
     "UPDATE shift SET nama_shift='" +
@@ -73,6 +75,8 @@ router.patch("/:id_shift", function (req, res, next) {
     jam_pulang +
     "', nominal='" +
     nominal +
+    "', garansi_fee='" +
+    garansi_fee +
     "' WHERE id_shift=" +
     id_shift;
 

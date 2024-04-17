@@ -21,6 +21,9 @@ module.exports = {
       nominal: {
         type: Sequelize.DECIMAL,
       },
+      garansi_fee: {
+        type: Sequelize.DECIMAL,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

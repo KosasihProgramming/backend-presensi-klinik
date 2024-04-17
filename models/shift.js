@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       jam_masuk: DataTypes.TIME,
       jam_pulang: DataTypes.TIME,
       nominal: DataTypes.DECIMAL,
+      garansi_fee: DataTypes.DECIMAL,
     },
     {
       sequelize,
