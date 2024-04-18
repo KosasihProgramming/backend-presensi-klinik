@@ -26,7 +26,7 @@ router.get("/", function (req, res) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -43,7 +43,7 @@ router.get("/now", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -65,7 +65,7 @@ router.get("/pulang/all", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -86,7 +86,7 @@ router.get("/filter/:tanggal", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -105,7 +105,7 @@ router.get("/:id_kehadiran", function (req, res) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });

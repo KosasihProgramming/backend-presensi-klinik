@@ -12,7 +12,7 @@ router.get("/", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("Sukses ");
     res.json(result);
   });
 });

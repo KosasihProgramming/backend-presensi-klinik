@@ -15,8 +15,15 @@ module.exports = {
       tahun: {
         type: Sequelize.STRING,
       },
+      barcode: {
+        type: Sequelize.STRING,
+      },
       nama_dokter: {
         type: Sequelize.STRING,
+      },
+      nama_dokter_pengganti: {
+        type: Sequelize.STRING,
+        defaultValue: null,
       },
       total_data_insentif: {
         type: Sequelize.INTEGER,

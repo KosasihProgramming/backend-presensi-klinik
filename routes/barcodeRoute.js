@@ -12,7 +12,7 @@ router.get("/", function (req, res) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -26,7 +26,7 @@ router.get("/:barcode", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -47,7 +47,7 @@ router.get("/dokter/:id_kehadiran", function (req, res) {
       console.log("Error executing query", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
-    console.log("Query result:", result);
+    console.log("OK:");
     res.json(result);
   });
 });

@@ -12,7 +12,7 @@ router.get("/data/", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -39,7 +39,7 @@ router.post("/add/", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("OK");
     res.json(result);
   });
 });
@@ -60,7 +60,7 @@ router.post("/", function (req, res, next) {
         res.status(500).json({ error: "Internal Server Error" });
         return;
       }
-      console.log("New record created:", result);
+      console.log("New record created");
       res.status(201).json({ message: "Data berhasil ditambahkan" });
     }
   );

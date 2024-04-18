@@ -17,8 +17,7 @@ router.post("/", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result jadwal Detail:", result);
-    console.log(stringQuery);
+    console.log("Jumalh data detail jadwal : ", result.length);
     res.json(result);
   });
 });
@@ -41,7 +40,7 @@ router.post("/add/", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("Jumlah data ditambah: ", result.length);
     res.json(result);
   });
 });
@@ -65,9 +64,8 @@ router.post("/edit/", function (req, res, next) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("Query result:", result);
+    console.log("Jumlah data diupdate: ", result.length);
     res.json(result);
-    console.log(addQuery);
   });
 });
 
@@ -82,9 +80,17 @@ router.delete("/delete/:idDetail", function (req, res, next) {
       console.error("Error executing query:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
+
     const deleteKehadiran = `DELETE FROM kehadiran WHERE id_detail_jadwal = ${idDetail}`;
-    console.log("Data deleted successfully");
-    res.json({ message: "Data deleted successfully" });
+
+    connection.query(deleteKehadiran, [idDetail], (error, result) => {
+      if (!error) {
+        console.log("Data deleted successfully");
+        res.json({ message: "Data deleted successfully" });
+      } else {
+        console.log(error);
+      }
+    });
   });
 });
 

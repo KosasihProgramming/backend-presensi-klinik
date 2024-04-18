@@ -430,4 +430,20 @@ router.post("/hapus/data/", function (req, res, next) {
   });
 });
 
+router.post("/informasi/", function (req, res) {
+  const namaDokter = req.params.nama_dokter;
+  const tahun = req.params.tahun;
+  const bulan = req.params.bulan;
+
+  const querySearch = `SELECT nama_shift, tanggal FROM rekap_insentif_shift WHERE nama_dokter='${namaDokter}' AND tahun='${tahun}' AND bulan='${bulan}'`;
+
+  connection.query(querySearch, (error, result) => {
+    if (error) {
+      console.log("Error executing query", error);
+      return;
+    }
+    res.json(result);
+  });
+});
+
 module.exports = router;
