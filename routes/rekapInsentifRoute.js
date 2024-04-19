@@ -446,4 +446,228 @@ router.post("/informasi/", function (req, res) {
   });
 });
 
+router.post("/test", function (req, res, next) {
+  const { tanggalRange, bulan, tahun, data_insentif } = req.body;
+  tanggalRange.forEach((tgl) => {
+    let tanggal = tgl.tanggal;
+
+    const stringQuery = `SELECT 
+    detail_jadwal.tanggal,
+    detail_jadwal.id as id_detail_jadwal,
+    shift.id_shift,
+    shift.nama_shift,
+    shift.jam_masuk,
+    shift.jam_pulang,
+    shift.nominal,
+    shift.garansi_fee,
+    pegawai.nik,
+    pegawai.nama,
+    kehadiran.barcode,
+    kehadiran.denda_telat,
+    kehadiran.nama_dokter_pengganti,
+    detail_jadwal.nominal FROM kehadiran
+    JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
+    JOIN shift ON kehadiran.id_shift = shift.id_shift
+    JOIN barcode ON kehadiran.barcode = barcode.barcode
+    JOIN pegawai ON barcode.id = pegawai.id
+    WHERE DATE(kehadiran.jam_masuk) = '${tanggal}';`;
+
+    connection.query(stringQuery, (error, result) => {
+      if (error) {
+        console.log("Error executing query", error);
+        return;
+      }
+
+      if (result.length > 0) {
+        console.log(stringQuery);
+        console.log(result);
+        const dataAwal = result;
+        const data = result;
+        data.forEach((item, i) => {
+          const tanggal = item.tanggal;
+          const jam_masuk = item.jam_masuk;
+          const jam_keluar = item.jam_pulang;
+          const totalInsentifArray = [];
+
+          console.log(item.kd_dokter);
+
+          const query1 = selectInsentifRawatJalanDr(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query2 = selectInsentifRawatJalanDrPr(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query3 = selectInsentifRawatInapDr(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query4 = selectInsentifRawatInapDrPr(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query5 = selectInsentifPeriksaLab(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query6 = selectInsentifDetailPeriksaLab(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query7 = selectInsentifTarifPeriksaLab(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+          const query8 = selectInsentifDetailTarifPeriksaLab(
+            tanggal,
+            item.nik,
+            jam_masuk,
+            jam_keluar
+          );
+
+          const querySelectInsentif = [
+            query1,
+            query2,
+            query3,
+            query4,
+            query5,
+            query6,
+            query7,
+            query8,
+          ];
+
+          var totalInsentif = 0;
+          var processedQueries = 0;
+          let komisi = 0;
+          let kekurangan = 0;
+          querySelectInsentif.forEach((query, index) => {
+            connection.query(query, function (error, results, fields) {
+              if (error) {
+                console.error("Error executing query:", error);
+                return connection.rollback(function () {
+                  console.error("Error rolling back transaction:", error);
+                  throw error;
+                });
+              }
+
+              console.log("result: ", results);
+              console.log(results[0].total, "total insentif");
+
+              if (results[0].total != null) {
+                console.log("index 0", results[0].total);
+                totalInsentif += parseInt(results[0].total);
+              }
+
+              processedQueries++;
+
+              let garansi = totalInsentif + item.nominal;
+              if (garansi <= item.garansi_fee) {
+                kekurangan = item.garansi_fee - garansi;
+                komisi = item.garansi_fee;
+                if (item.denda_telat > 0) {
+                  komisi = komisi - item.denda_telat;
+                }
+              } else {
+                komisi = garansi;
+                if (item.denda_telat > 0) {
+                  komisi = komisi - item.denda_telat;
+                }
+              }
+
+              if (processedQueries === querySelectInsentif.length) {
+                totalInsentifArray.push(totalInsentif);
+
+                // Mengecek apakah item.kode ada di dalam data.nik
+                const foundIndex = dataAwal.findIndex(
+                  (dataItem) =>
+                    dataItem.id_detail_jadwal === item.id_detail_jadwal
+                );
+
+                // Jika item.kode ditemukan di dalam data.nik
+                if (foundIndex !== -1) {
+                  console.log("Adaaa");
+                  // Menambahkan properti insentif ke objek yang sesuai
+                  dataAwal[foundIndex].insentif = totalInsentif;
+                  dataAwal[foundIndex].totalgaji = komisi;
+                  dataAwal[foundIndex].kekurangan = kekurangan;
+                }
+                console.log(results[0]);
+                console.log(totalInsentif, "total insentif Akhir");
+                console.log("nominal", item.nominal);
+                console.log("garansi", item.garansi_fee);
+                console.log("Komisi", komisi);
+                console.log(dataAwal, "Data Hasil");
+                const addQuery =
+                  "insert into rekap_insentif_shift (tanggal, bulan, tahun, nama_shift, nama_dokter, insentif, nominal_shift, total_gaji, kekurangan_garansi_fee, garansi_fee, barcode, denda_telat, nama_dokter_pengganti, createdAt) values ('" +
+                  tanggal +
+                  "','" +
+                  bulan +
+                  "','" +
+                  tahun +
+                  "','" +
+                  item.nama_shift +
+                  "','" +
+                  item.nama +
+                  "','" +
+                  totalInsentif +
+                  "','" +
+                  item.nominal +
+                  "','" +
+                  komisi +
+                  "','" +
+                  kekurangan +
+                  "','" +
+                  item.garansi_fee +
+                  "','" +
+                  item.barcode +
+                  "','" +
+                  item.denda_telat +
+                  "','" +
+                  item.nama_dokter_pengganti +
+                  "',CURDATE())";
+
+                connection.query(addQuery, (error, result) => {
+                  if (error) {
+                    console.log("Error executing query", error);
+                    return;
+                  }
+                  const selectData = querySelectData(bulan, tahun);
+
+                  connection.query(selectData, (error, resultDataSelect) => {
+                    if (error) {
+                      console.log("Error executing query", error);
+                      return;
+                    }
+                    if (i == data.length - 1) {
+                      console.log(resultDataSelect, "Hasil");
+                      res.json(resultDataSelect);
+                    }
+                  });
+                });
+              }
+            });
+          });
+
+          // });
+        });
+      }
+    });
+  });
+});
+
 module.exports = router;
