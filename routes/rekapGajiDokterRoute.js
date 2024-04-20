@@ -9,12 +9,17 @@ const queryDelete = (bulan, tahun) => {
 };
 
 const querySelect = (bulan, tahun) => {
-  const query = `SELECT * FROM rekap_gaji_dokter where bulan='${bulan}' and tahun='${tahun}'`;
+  const query = `SELECT * FROM rekap_gaji_dokter where bulan='${bulan}' AND tahun='${tahun}' AND jbtn != 'drg'`;
   return query;
 };
 
 const querySelectPengganti = (bulan, tahun) => {
-  const query = `SELECT * FROM rekap_gaji_dokter where bulan='${bulan}' and tahun='${tahun}' and nama_dokter_penggn IS NOT NULL`;
+  const query = `SELECT * FROM rekap_gaji_dokter where bulan='${bulan}' AND tahun='${tahun}' AND nama_dokter_penggn IS NOT NULL`;
+  return query;
+};
+
+const querySelectGigi = (bulan, tahun) => {
+  const query = `SELECT * FROM rekap_gaji_dokter where bulan='${bulan}' AND tahun='${tahun}' AND jbtn='drg' AND jbtn = 'drg'`;
   return query;
 };
 
@@ -64,6 +69,22 @@ router.post("/cek/pengganti", function (req, res, next) {
   });
 });
 
+// Ambil data dokter gigi
+router.post("/cek/gigi", function (req, res, next) {
+  const { bulan, tahun } = req.body;
+
+  const selectData = querySelectGigi(bulan, tahun);
+
+  connection.query(selectData, (error, result) => {
+    if (error) {
+      console.log("Error executing query", error);
+      return;
+    }
+    console.log(selectData, "queryselect");
+    res.json(result);
+  });
+});
+
 // Insett data
 router.post("/add/data", function (req, res, next) {
   const data = req.body;
@@ -74,7 +95,7 @@ router.post("/add/data", function (req, res, next) {
   }
 
   // Query untuk melakukan insert data
-  const insertQuery = `INSERT INTO rekap_gaji_dokter (bulan, tahun, barcode, nama_dokter, nama_dokter_pengganti, total_data_insentif, total_insentif, total_data_nominal, total_nominal, total_garansi_fee, total_denda_telat, pajak, total_gaji_periode, gaji_akhir) VALUES ?`;
+  const insertQuery = `INSERT INTO rekap_gaji_dokter (bulan, tahun, barcode, nama_dokter, jbtn, nama_dokter_pengganti, shift_dokter_pengganti, total_data_insentif, total_insentif, total_data_nominal, total_nominal, total_garansi_fee, total_denda_telat, pajak, total_gaji_periode, gaji_akhir) VALUES ?`;
 
   // Array 2D untuk menampung nilai yang akan di-insert
   const values = data.map((item) => [
@@ -82,7 +103,10 @@ router.post("/add/data", function (req, res, next) {
     item.tahun,
     item.barcode,
     item.nama_dokter,
+    item.jbtn,
     item.nama_dokter_pengganti === "" ? null : item.nama_dokter_pengganti,
+    item.shift_dokter_pengganti,
+    // === "" ? null : item.shift_dokter_pengganti,
     item.total_data_insentif,
     item.total_insentif,
     item.total_data_nominal,
@@ -128,117 +152,106 @@ router.post("/delete/data", function (req, res, next) {
 
 module.exports = router;
 
-// [
-//   {
-//     barcode: "222",
-//     bulan: "April",
-//     denda_telat: 0,
-//     garansi_fee: 100000,
-//     id: 11,
-//     insentif: 0,
-//     kekurangan_garansi_fee: 100000,
-//     nama_dokter: "dr. Qotrunnada",
-//     nama_dokter_pengganti: "dr. Kochan",
-//     nama_shift: "Shift Siang",
-//     nominal_shift: 50000,
-//     tahun: "2024",
-//     tanggal: "2024-04-17",
-//     total_gaji: 100000,
-//   },
-//   {
-//     barcode: "222",
-//     bulan: "April",
-//     denda_telat: 20000,
-//     garansi_fee: 100000,
-//     id: 12,
-//     insentif: 0,
-//     kekurangan_garansi_fee: 100000,
-//     nama_dokter: "dr. Qotrunnada",
-//     nama_dokter_pengganti: "",
-//     nama_shift: "Shift Sore",
-//     nominal_shift: 50000,
-//     tahun: "2024",
-//     tanggal: "2024-04-17",
-//     total_gaji: 80000,
-//   },
-//   {
-//     barcode: "100",
-//     bulan: "April",
-//     denda_telat: 20000,
-//     garansi_fee: 100000,
-//     id: 13,
-//     insentif: 0,
-//     kekurangan_garansi_fee: 100000,
-//     nama_dokter: "dr. Aisyah",
-//     nama_dokter_pengganti: "",
-//     nama_shift: "Shift Siang",
-//     nominal_shift: 50000,
-//     tahun: "2024",
-//     tanggal: "2024-04-17",
-//     total_gaji: 80000,
-//   },
-//   {
-//     barcode: "100",
-//     bulan: "April",
-//     denda_telat: 20000,
-//     garansi_fee: 100000,
-//     id: 14,
-//     insentif: 0,
-//     kekurangan_garansi_fee: 100000,
-//     nama_dokter: "dr. Aisyah",
-//     nama_dokter_pengganti: "",
-//     nama_shift: "Shift Siang",
-//     nominal_shift: 50000,
-//     tahun: "2024",
-//     tanggal: "2024-04-17",
-//     total_gaji: 80000,
-//   },
-// ];
+[
+  {
+    barcode: "222",
+    bulan: "April",
+    denda_telat: 0,
+    garansi_fee: 100000,
+    id: 11,
+    insentif: 0,
+    kekurangan_garansi_fee: 100000,
+    nama_dokter: "dr. Qotrunnada",
+    nama_dokter_pengganti: "dr. Kochan",
+    nama_shift: "Shift Siang",
+    nominal_shift: 50000,
+    tahun: "2024",
+    tanggal: "2024-04-17",
+    total_gaji: 100000,
+  },
+  {
+    barcode: "222",
+    bulan: "April",
+    denda_telat: 20000,
+    garansi_fee: 100000,
+    id: 12,
+    insentif: 0,
+    kekurangan_garansi_fee: 100000,
+    nama_dokter: "dr. Qotrunnada",
+    nama_dokter_pengganti: "dr. Ria",
+    nama_shift: "Shift Sore",
+    nominal_shift: 50000,
+    tahun: "2024",
+    tanggal: "2024-04-17",
+    total_gaji: 80000,
+  },
+  {
+    barcode: "100",
+    bulan: "April",
+    denda_telat: 20000,
+    garansi_fee: 100000,
+    id: 13,
+    insentif: 0,
+    kekurangan_garansi_fee: 100000,
+    nama_dokter: "dr. Aisyah",
+    nama_dokter_pengganti: "",
+    nama_shift: "Shift Siang",
+    nominal_shift: 50000,
+    tahun: "2024",
+    tanggal: "2024-04-17",
+    total_gaji: 80000,
+  },
+  {
+    barcode: "100",
+    bulan: "April",
+    denda_telat: 20000,
+    garansi_fee: 100000,
+    id: 14,
+    insentif: 0,
+    kekurangan_garansi_fee: 100000,
+    nama_dokter: "dr. Aisyah",
+    nama_dokter_pengganti: "",
+    nama_shift: "Shift Siang",
+    nominal_shift: 50000,
+    tahun: "2024",
+    tanggal: "2024-04-17",
+    total_gaji: 80000,
+  },
+];
 
-// [
-//   {
-//     barcode: "100",
-//     bulan: "April",
-//     gaji_akhir: 159000,
-//     nama_dokter: "dr. Aisyah",
-//     pajak: 4000,
-//     tahun: 2024,
-//     total_data_insentif: 0,
-//     total_data_nominal: 2,
-//     total_denda_telat: 40000,
-//     total_gaji_periode: 160000,
-//     total_garansi_fee: 200000,
-//     total_insentif: 0,
-//     total_nominal: 100000,
-//   },
-//   {
-//     barcode: "222",
-//     bulan: "April",
-//     gaji_akhir: 78000,
-//     nama_dokter: "dr. Qotrunnada",
-//     pajak: 2000,
-//     tahun: 2024,
-//     total_data_insentif: 0,
-//     total_data_nominal: 1,
-//     total_denda_telat: 20000,
-//     total_gaji_periode: 80000,
-//     total_garansi_fee: 100000,
-//     total_insentif: 0,
-//     total_nominal: 50000,
-//   },
-//   {
-//     barcode: "222",
-//     bulan: "April",
-//     gaji_akhir: 97500,
-//     nama_dokter: "dr. Qotrunnada (P)",
-//     pajak: 2500,
-//     tahun: 2024,
-//     total_data_insentif: 0,
-//     total_data_nominal: 1,
-//     total_denda_telat: 20000,
-//     total_gaji_periode: 100000,
-//     total_garansi_fee: 100000,
-//     total_insentif: 0,
-//     total_nominal: 50000,
-//   },
-// ];
+[
+  {
+    barcode: "100",
+    bulan: "April",
+    gaji_akhir: 159000,
+    nama_dokter: "dr. Aisyah",
+    nama_dokter_pengganti: "",
+    shift_dokter_pengganti: 0,
+    pajak: 4000,
+    tahun: 2024,
+    total_data_insentif: 0,
+    total_data_nominal: 2,
+    total_denda_telat: 40000,
+    total_gaji_periode: 160000,
+    total_garansi_fee: 200000,
+    total_insentif: 0,
+    total_nominal: 100000,
+  },
+  {
+    barcode: "222",
+    bulan: "April",
+    gaji_akhir: 78000,
+    nama_dokter: "dr. Qotrunnada",
+    nama_dokter_pengganti: "dr. Chandra, dr. Ria",
+    shift_dokter_pengganti: 2,
+    pajak: 2000,
+    tahun: 2024,
+    total_data_insentif: 0,
+    total_data_nominal: 2,
+    total_denda_telat: 20000,
+    total_gaji_periode: 180000,
+    total_garansi_fee: 200000,
+    total_insentif: 0,
+    total_nominal: 100000,
+  },
+];

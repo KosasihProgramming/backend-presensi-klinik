@@ -21,9 +21,15 @@ module.exports = {
       nama_dokter: {
         type: Sequelize.STRING,
       },
+      jbtn: {
+        type: Sequelize.STRING,
+      },
       nama_dokter_pengganti: {
         type: Sequelize.STRING,
         defaultValue: null,
+      },
+      shift_dokter_pengganti: {
+        type: Sequelize.INTEGER,
       },
       total_data_insentif: {
         type: Sequelize.INTEGER,

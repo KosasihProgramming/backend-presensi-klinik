@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       tahun: DataTypes.STRING,
       nama_shift: DataTypes.STRING,
       nama_dokter: DataTypes.STRING,
+      jbtn: DataTypes.STRING,
       insentif: DataTypes.INTEGER,
       nominal_shift: DataTypes.INTEGER,
       total_gaji: DataTypes.INTEGER,
