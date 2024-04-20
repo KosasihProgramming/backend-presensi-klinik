@@ -12,6 +12,12 @@ module.exports = {
       tanggal: {
         type: Sequelize.STRING,
       },
+      bulan: {
+        type: Sequelize.STRING,
+      },
+      tahun: {
+        type: Sequelize.STRING,
+      },
       nama_perawat: {
         type: Sequelize.STRING,
       },

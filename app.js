@@ -15,6 +15,7 @@ const pegawai = require("./routes/PegawaiRoute");
 const klinik = require("./routes/klinikRouter");
 const insentif = require("./routes/rekapInsentifRoute");
 const totalGaji = require("./routes/rekapGajiDokterRoute");
+const insentifPerawatGigi = require("./routes/rekapShiftPerawatGigiRoute");
 
 app.get("/", (req, res) => {
   res.send("Web API untuk absensi");
@@ -35,6 +36,7 @@ app.use("/pegawai", pegawai);
 app.use("/klinik", klinik);
 app.use("/insentif", insentif);
 app.use("/total-gaji", totalGaji);
+app.use("/insentif-perawat-gigi", insentifPerawatGigi);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
