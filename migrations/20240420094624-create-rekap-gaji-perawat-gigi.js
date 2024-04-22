@@ -2,15 +2,12 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("rekap_shift_perawat_gigi", {
+    await queryInterface.createTable("rekap_gaji_perawat_gigi", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
-      },
-      tanggal: {
-        type: Sequelize.STRING,
       },
       bulan: {
         type: Sequelize.STRING,
@@ -18,26 +15,26 @@ module.exports = {
       tahun: {
         type: Sequelize.STRING,
       },
+      barcode: {
+        type: Sequelize.STRING,
+      },
       nama_perawat: {
         type: Sequelize.STRING,
       },
-      nama_shift: {
-        type: Sequelize.STRING,
-      },
-      nominal_shift: {
+      total_data_nominal: {
         type: Sequelize.INTEGER,
       },
-      insentif: {
+      total_nominal: {
         type: Sequelize.INTEGER,
       },
-      denda_telat: {
+      total_insentif: {
         type: Sequelize.INTEGER,
       },
-      total_gaji: {
+      total_denda_telat: {
         type: Sequelize.INTEGER,
       },
-      barcode: {
-        type: Sequelize.STRING,
+      total_data_gaji_akhir: {
+        type: Sequelize.INTEGER,
       },
       createdAt: {
         allowNull: false,
@@ -50,6 +47,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("rekap_shift_perawat_gigi");
+    await queryInterface.dropTable("rekap_gaji_perawat_gigi");
   },
 };

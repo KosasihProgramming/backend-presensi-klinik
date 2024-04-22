@@ -72,8 +72,7 @@ router.post("/nominal", function (req, res, next) {
     JOIN shift ON kehadiran.id_shift = shift.id_shift
     JOIN barcode ON kehadiran.barcode = barcode.barcode
     JOIN pegawai ON barcode.id = pegawai.id
-    WHERE DATE(kehadiran.jam_masuk) = '${tanggal}' AND 
-    (pegawai.jbtn = 'pr' OR pegawai.jbtn = 'prg');`;
+    WHERE DATE(kehadiran.jam_masuk) = '${tanggal}' AND pegawai.jbtn = 'prg';`;
 
     connection.query(stringQuery, (error, result) => {
       if (error) {
@@ -177,7 +176,7 @@ router.post("/nominal", function (req, res, next) {
                 console.log("garansi", item.garansi_fee);
                 console.log("Komisi", komisi);
                 console.log(dataAwal, "Data Hasil");
-                const addQuery = `INSERT INTO rekap_shift_perawat_gigi (tanggal, bulan, tahun, nama_perawat, nama_shift, nominal_shift, insentif, denda_telat, total_gaji, createdAt, updatedAt) VALUES ('${tanggal}', '${bulan}', '${tahun}', '${item.nama}', '${item.nama_shift}', '${item.nominal}', '${totalInsentif}', '${item.denda_telat}','${komisi}', NOW(), NOW())`;
+                const addQuery = `INSERT INTO rekap_shift_perawat_gigi (tanggal, bulan, tahun, nama_perawat, nama_shift, nominal_shift, insentif, denda_telat, total_gaji, barcode, createdAt, updatedAt) VALUES ('${tanggal}', '${bulan}', '${tahun}', '${item.nama}', '${item.nama_shift}', '${item.nominal}', '${totalInsentif}', '${item.denda_telat}','${komisi}', '${item.barcode}', NOW(), NOW())`;
 
                 connection.query(addQuery, (error, result) => {
                   if (error) {
