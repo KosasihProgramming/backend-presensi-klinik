@@ -60,6 +60,20 @@ module.exports = {
         nominal: 50000,
         garansi_fee: 0,
       },
+      {
+        nama_shift: "Shift Perawat Umum Pagi",
+        jam_masuk: "08:00:00",
+        jam_pulang: "15:00:00",
+        nominal: 50000,
+        garansi_fee: 0,
+      },
+      {
+        nama_shift: "Shift Perawat Umum Siang",
+        jam_masuk: "15:00:00",
+        jam_pulang: "22:00:00",
+        nominal: 50000,
+        garansi_fee: 0,
+      },
     ]);
   },
 

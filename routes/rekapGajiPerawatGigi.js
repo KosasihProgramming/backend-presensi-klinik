@@ -55,7 +55,7 @@ router.post("/add/data", function (req, res, next) {
     item.total_nominal,
     item.total_insentif,
     item.total_denda_telat,
-    item.gaji_data_gaji_akhir,
+    item.total_data_gaji_akhir,
   ]);
 
   // Eksekusi query insert dengan menggunakan array 2D sebagai nilai
