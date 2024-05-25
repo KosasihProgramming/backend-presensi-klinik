@@ -21,6 +21,7 @@ const insentifPerawatUmum = require("./routes/rekapShiftPerawatUmum");
 const loginRoutes = require("./routes/loginRoutes");
 const kehadiranDokter = require("./routes/rekapKehadiran/dokter");
 const kehadiranDokterGigi = require("./routes/rekapKehadiran/dokterGigi");
+const kehadiranPerawat = require("./routes/rekapKehadiran/perawat");
 
 app.get("/", (req, res) => {
   res.send("Web API untuk absensi");
@@ -50,6 +51,7 @@ app.use("/login", loginRoutes);
 // Rekap kehadiran
 app.use("/rekap-kehadiran-dokter", kehadiranDokter);
 app.use("/rekap-kehadiran-dokter-gigi", kehadiranDokterGigi);
+app.use("/rekap-kehadiran-perawat", kehadiranPerawat);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
