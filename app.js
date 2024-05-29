@@ -25,6 +25,8 @@ const kehadiranPerawat = require("./routes/rekapKehadiran/perawat");
 const kehadiranPerawatGigi = require("./routes/rekapKehadiran/perawatGigi");
 const kehadiranFarmasi = require("./routes/rekapKehadiran/farmasi");
 
+const kehadiranKantor = require("./routes/rekapKehadiran/pegawaiKantor");
+
 app.get("/", (req, res) => {
   res.send("Web API untuk absensi");
 });
@@ -56,6 +58,7 @@ app.use("/rekap-kehadiran-dokter-gigi", kehadiranDokterGigi);
 app.use("/rekap-kehadiran-perawat", kehadiranPerawat);
 app.use("/rekap-kehadiran-perawat-gigi", kehadiranPerawatGigi);
 app.use("/rekap-kehadiran-farmasi", kehadiranFarmasi);
+app.use("/rekap-kehadiran-pegawai-kantor", kehadiranKantor);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
