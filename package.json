@@ -10,7 +10,7 @@
   "author": "kosasih",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.4"
   },
   "dependencies": {
     "cors": "^2.8.5",

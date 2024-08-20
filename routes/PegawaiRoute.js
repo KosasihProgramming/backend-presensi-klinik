@@ -16,6 +16,106 @@ router.get("/data/", function (req, res, next) {
     res.json(result);
   });
 });
+router.post("/add-pegawai/", function (req, res, next) {
+  const { id, nama, jk, barcode } = req.body;
+
+  const addPegawaiQuery = `
+    INSERT INTO pegawai (
+      id, nik, nama, jk, jbtn, jnj_jabatan, kode_kelompok, kode_resiko, kode_emergency, departemen, bidang, stts_wp, stts_kerja, npwp, pendidikan, gapok, tmp_lahir, tgl_lahir, alamat, kota, mulai_kerja, ms_kerja, indexins, bpd, rekening, stts_aktif, wajibmasuk, pengurang, indek, mulai_kontrak, cuti_diambil, dankes, photo, no_ktp
+    ) VALUES (
+      '${id}', '123', '${nama}', '${jk}', 'karkantor', '-', '-', '-', '-', 'RJ', '-', '-', 'FT', '-', 'S1 KEDOKTERAN', 0, '-', '2000-01-01', '-', '-', '2020-01-01', 'PT', '-', 'MANDIRI', 'rekening', '', 0, 0, 0, '0000-00-00', 0, 0, 'pages/pegawai/photo/', 'n0ktp'
+    )
+  `;
+
+  const addBarcodeQuery = `
+    INSERT INTO barcode (
+      id, barcode
+    ) VALUES (
+      '${id}', '${barcode}'
+    )
+  `;
+
+  // Mulai transaksi
+  connection.beginTransaction((err) => {
+    if (err) {
+      return res.status(500).json({ error: "Transaction error: " + err });
+    }
+
+    // Eksekusi query untuk menambahkan data pegawai
+    connection.query(addPegawaiQuery, (error, result) => {
+      if (error) {
+        return connection.rollback(() => {
+          console.log("Error executing query", error);
+          res.status(500).json({ error: "Database query error: " + error });
+        });
+      }
+
+      // Eksekusi query untuk menambahkan data barcode
+      connection.query(addBarcodeQuery, (error, result) => {
+        if (error) {
+          return connection.rollback(() => {
+            console.log("Error executing query", error);
+            res.status(500).json({ error: "Database query error: " + error });
+          });
+        }
+
+        // Jika semua berhasil, commit transaksi
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.log("Transaction commit error", err);
+              res
+                .status(500)
+                .json({ error: "Transaction commit error: " + err });
+            });
+          }
+
+          console.log("Transaction completed successfully");
+          res.json({
+            message: "Data pegawai dan barcode berhasil ditambahkan",
+          });
+        });
+      });
+    });
+  });
+});
+
+// hapus data Pegawwai
+router.delete("/delete-pegawai/:id", function (req, res, next) {
+  const { id } = req.params;
+
+  const deleteQuery = "DELETE FROM pegawai WHERE id = " + id;
+
+  connection.query(deleteQuery, [id], (error, result) => {
+    if (error) {
+      console.error("Error executing query:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    console.log("Data deleted successfully");
+    res.json({ message: "Data deleted successfully" });
+  });
+});
+
+// Update data pegawai
+router.post("/update-pegawai/", function (req, res, next) {
+  const { barcode, nama, jk } = req.body; // Hanya mengambil variabel yang diperlukan dari req.body
+  const updateQuery =
+    "UPDATE pegawai SET nama='" +
+    nama +
+    "', jk='" +
+    jk +
+    "' WHERE id=" +
+    barcode;
+
+  connection.query(updateQuery, (error, result) => {
+    if (error) {
+      console.log("Error executing query", error);
+      return res.status(500).json({ error: "Database query error" });
+    }
+    console.log("OK");
+    res.json(result);
+  });
+});
 
 // ambil data berdasarkan id
 router.post("/add/", function (req, res, next) {

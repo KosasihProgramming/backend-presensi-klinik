@@ -99,8 +99,8 @@ router.post("/get", async function (req, res, next) {
     await Promise.all(
       result.map(async (item) => {
         const insertQuery = `INSERT INTO rekap_hadir_kantor 
-      (tanggal, bulan, tahun, nama_shift, nama_perawat, jbtn, nominal_shift, barcode, denda_telat, telat, total, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      (tanggal, bulan, tahun, nama_shift, nama_perawat, jbtn, nominal_shift, jam_masuk, jam_keluar,barcode, denda_telat, telat, total, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)`;
 
         const currentDate = new Date();
         const total = item.nominal - item.denda_telat;
@@ -112,6 +112,8 @@ router.post("/get", async function (req, res, next) {
           item.nama,
           item.jbtn,
           item.nominal,
+          item.jam_masuk,
+          item.jam_keluar,
           item.barcode,
           item.denda_telat,
           item.telat,
