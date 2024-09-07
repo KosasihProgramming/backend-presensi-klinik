@@ -79,8 +79,7 @@ router.post("/get", async function (req, res, next) {
   JOIN shift s ON k.id_shift = s.id_shift
   WHERE p.jbtn = 'karkantor'
     AND jk.bulan = ?
-    AND jk.tahun = ?
-    AND k.foto_keluar IS NOT NULL;`;
+    AND jk.tahun = ?;`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -93,7 +92,7 @@ router.post("/get", async function (req, res, next) {
       });
     });
 
-    console.log("Sukses");
+    console.log("Sukses data", result);
 
     // Iterasi melalui setiap item dalam hasil query dan lakukan operasi insert
     await Promise.all(
@@ -128,9 +127,9 @@ router.post("/get", async function (req, res, next) {
               if (error) {
                 reject(error);
               } else {
-                console.log(
-                  "Data berhasil disisipkan ke tabel rekap_hadir_kantor"
-                );
+                // console.log(
+                //   "Data berhasil disisipkan ke tabel rekap_hadir_kantor"
+                // );
                 resolve();
               }
             });
@@ -148,4 +147,32 @@ router.post("/get", async function (req, res, next) {
   }
 });
 
+router.post("/cek-izin", async function (req, res, next) {
+  const { bulan, tahun } = req.body;
+
+  if (!bulan || !tahun) {
+    res.status(400).send("Bulan dan tahun harus disertakan.");
+    return;
+  }
+
+  const stringQuery = `SELECT * FROM izinpegawai WHERE bulan = ? AND tahun = ?`;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      connection.query(stringQuery, [bulan, tahun], (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(result);
+      });
+    });
+
+    console.log("Sukses");
+    res.json(result);
+  } catch (error) {
+    console.log("Error executing query", error);
+    res.status(500).send("Error executing query");
+  }
+});
 module.exports = router;

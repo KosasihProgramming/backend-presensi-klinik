@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const session = require("express-session");
-
+const bodyParser = require("body-parser");
 const app = express();
 const port = 5000;
 
@@ -26,7 +26,11 @@ const kehadiranPerawatGigi = require("./routes/rekapKehadiran/perawatGigi");
 const kehadiranFarmasi = require("./routes/rekapKehadiran/farmasi");
 
 const kehadiranKantor = require("./routes/rekapKehadiran/pegawaiKantor");
+// Middleware untuk parsing JSON dan form-urlencoded
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
+// Static folder untuk mengakses file yang di-upload
 app.get("/", (req, res) => {
   res.send("Web API untuk absensi");
 });
