@@ -111,9 +111,9 @@ router.get("/filter/:tanggal", function (req, res, next) {
 router.get("/:id_kehadiran", function (req, res) {
   const { id_kehadiran } = req.params;
 
-  const showQuery = `SELECT kehadiran.*, shift.nama_shift, shift.jam_masuk AS jam_masuk_shift, shift.jam_pulang AS jam_keluar_shift
+  const showQuery = `SELECT kehadiran.*, detail_jadwal.tanggal,shift.nama_shift, shift.jam_masuk AS jam_masuk_shift, shift.jam_pulang AS jam_keluar_shift
   FROM kehadiran
-  JOIN shift ON kehadiran.id_shift = shift.id_shift
+  JOIN shift ON kehadiran.id_shift = shift.id_shift   JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
   WHERE kehadiran.id_kehadiran = ${id_kehadiran}`;
 
   connection.query(showQuery, (error, result) => {
@@ -121,7 +121,7 @@ router.get("/:id_kehadiran", function (req, res) {
       console.log("Error executing query", error);
       return;
     }
-    console.log("OK");
+    console.log("OK kehadiran");
     res.json(result);
   });
 });
