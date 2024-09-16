@@ -13,7 +13,7 @@ router.post("/cek", async function (req, res, next) {
     return;
   }
 
-  const stringQuery = `SELECT * FROM rekap_hadir_perawat WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `SELECT * FROM rekap_hadir_analis WHERE bulan = ? AND tahun = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -42,7 +42,7 @@ router.post("/delete", async function (req, res, next) {
     return;
   }
 
-  const stringQuery = `DELETE FROM rekap_hadir_perawat WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `DELETE FROM rekap_hadir_analis WHERE bulan = ? AND tahun = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ router.post("/get", async function (req, res, next) {
   JOIN barcode b ON k.barcode = b.barcode
   JOIN pegawai p ON b.id = p.id
   JOIN shift s ON k.id_shift = s.id_shift
-WHERE LOWER(p.nik) LIKE 'pru%'
+WHERE LOWER(p.nik) LIKE 'anl%'
 
     AND jk.bulan = ?
     AND jk.tahun = ?
@@ -100,8 +100,8 @@ WHERE LOWER(p.nik) LIKE 'pru%'
     // Iterasi melalui setiap item dalam hasil query dan lakukan operasi insert
     await Promise.all(
       result.map(async (item) => {
-        const insertQuery = `INSERT INTO rekap_hadir_perawat 
-      (tanggal, bulan, tahun, nama_shift, jam_masuk, jam_keluar, nama_perawat,nama_pengganti,nama_petugas, jbtn, nominal_shift, barcode, servicedoerid,denda_telat,denda_pulang_cepat, telat,pulang_cepat, total,total_jam,keterangan, createdAt, updatedAt)
+        const insertQuery = `INSERT INTO rekap_hadir_analis 
+      (tanggal, bulan, tahun, nama_shift, jam_masuk, jam_keluar, nama_analis,nama_pengganti,nama_petugas, jbtn, nominal_shift, barcode, servicedoerid,denda_telat,denda_pulang_cepat, telat,pulang_cepat, total,total_jam,keterangan, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?,?,?,?,?, ?,?,?,?,?)`;
 
         const currentDate = new Date();
@@ -147,7 +147,7 @@ WHERE LOWER(p.nik) LIKE 'pru%'
                 reject(error);
               } else {
                 console.log(
-                  "Data berhasil disisipkan ke tabel rekap_hadir_perawat"
+                  "Data berhasil disisipkan ke tabel rekap_hadir_analis"
                 );
                 resolve();
               }

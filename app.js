@@ -24,6 +24,8 @@ const kehadiranDokterGigi = require("./routes/rekapKehadiran/dokterGigi");
 const kehadiranPerawat = require("./routes/rekapKehadiran/perawat");
 const kehadiranPerawatGigi = require("./routes/rekapKehadiran/perawatGigi");
 const kehadiranFarmasi = require("./routes/rekapKehadiran/farmasi");
+const kehadirananalis = require("./routes/rekapKehadiran/analis");
+const kehadiranapoteker = require("./routes/rekapKehadiran/apoteker");
 
 const kehadiranKantor = require("./routes/rekapKehadiran/pegawaiKantor");
 // Middleware untuk parsing JSON dan form-urlencoded
@@ -58,6 +60,8 @@ app.use("/login", loginRoutes);
 
 // Rekap kehadiran
 app.use("/rekap-kehadiran-dokter", kehadiranDokter);
+app.use("/rekap-kehadiran-analis", kehadirananalis);
+app.use("/rekap-kehadiran-apoteker", kehadiranapoteker);
 app.use("/rekap-kehadiran-dokter-gigi", kehadiranDokterGigi);
 app.use("/rekap-kehadiran-perawat", kehadiranPerawat);
 app.use("/rekap-kehadiran-perawat-gigi", kehadiranPerawatGigi);

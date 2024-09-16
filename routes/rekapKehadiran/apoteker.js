@@ -13,7 +13,7 @@ router.post("/cek", async function (req, res, next) {
     return;
   }
 
-  const stringQuery = `SELECT * FROM rekap_hadir_perawat WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `SELECT * FROM rekap_hadir_apoteker WHERE bulan = ? AND tahun = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -42,7 +42,7 @@ router.post("/delete", async function (req, res, next) {
     return;
   }
 
-  const stringQuery = `DELETE FROM rekap_hadir_perawat WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `DELETE FROM rekap_hadir_apoteker WHERE bulan = ? AND tahun = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ router.post("/get", async function (req, res, next) {
   JOIN barcode b ON k.barcode = b.barcode
   JOIN pegawai p ON b.id = p.id
   JOIN shift s ON k.id_shift = s.id_shift
-WHERE LOWER(p.nik) LIKE 'pru%'
+WHERE LOWER(p.nik) LIKE 'ap%'
 
     AND jk.bulan = ?
     AND jk.tahun = ?
@@ -100,21 +100,16 @@ WHERE LOWER(p.nik) LIKE 'pru%'
     // Iterasi melalui setiap item dalam hasil query dan lakukan operasi insert
     await Promise.all(
       result.map(async (item) => {
-        const insertQuery = `INSERT INTO rekap_hadir_perawat 
-      (tanggal, bulan, tahun, nama_shift, jam_masuk, jam_keluar, nama_perawat,nama_pengganti,nama_petugas, jbtn, nominal_shift, barcode, servicedoerid,denda_telat,denda_pulang_cepat, telat,pulang_cepat, total,total_jam,keterangan, createdAt, updatedAt)
+        const insertQuery = `INSERT INTO rekap_hadir_apoteker 
+      (tanggal, bulan, tahun, nama_shift, jam_masuk, jam_keluar, nama_apoteker,nama_pengganti,nama_petugas, jbtn, nominal_shift, barcode, servicedoerid,denda_telat,denda_pulang_cepat, telat, pulang_cepat,total,total_jam,keterangan, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?,?,?,?,?, ?,?,?,?,?)`;
 
         const currentDate = new Date();
         const total = item.nominal - item.denda_telat;
         let totalJam = 0;
-        if (item.jam_masuk_shift == item.jam_pulang_shift) {
-          totalJam = 24;
-        } else {
-          totalJam = calculateTimeDifference(
-            item.jam_masuk_shift,
-            item.jam_pulang_shift
-          );
-        }
+
+        totalJam = calculateTimeDifference(item.jam_masuk, item.jam_keluar);
+
         const values = [
           item.tanggal,
           bulan,
@@ -147,7 +142,7 @@ WHERE LOWER(p.nik) LIKE 'pru%'
                 reject(error);
               } else {
                 console.log(
-                  "Data berhasil disisipkan ke tabel rekap_hadir_perawat"
+                  "Data berhasil disisipkan ke tabel rekap_hadir_apoteker"
                 );
                 resolve();
               }
@@ -162,69 +157,6 @@ WHERE LOWER(p.nik) LIKE 'pru%'
     res.json(result);
   } catch (error) {
     console.log("Error executing query", error);
-    res.status(500).send("Error executing query");
-  }
-});
-router.post("/get-insentif", async function (req, res, next) {
-  const { tanggal, barcode } = req.body;
-
-  if (!tanggal || !barcode) {
-    return res.status(400).send("Bulan dan tahun harus disertakan.");
-  }
-
-  const stringQuery = `SELECT * FROM sales WHERE salesdate = "${tanggal}"`;
-
-  try {
-    const salesResult = await new Promise((resolve, reject) => {
-      poolInsentif.query(stringQuery, (error, result) => {
-        if (error) {
-          console.error("Error executing Sales query:", error);
-          return reject(error);
-        }
-        resolve(result);
-      });
-    });
-
-    console.log("Query Sales sukses:", salesResult);
-
-    // Iterasi melalui setiap item dalam hasil query dan lakukan query untuk salesdetail
-    const updatedSalesResult = [];
-
-    for (let item of salesResult) {
-      const getQuery = `SELECT sd.*, p.costprice, s.formula, s.description, p.name 
-      FROM salesdetail sd 
-      JOIN product p ON sd.productid = p.id 
-      JOIN servicedoercommrules s ON p.servicedoercommrules = s.id 
-      WHERE sd.salesid = "${item.salesid}" and sd.servicedoerid = "${barcode}"`;
-      try {
-        const salesDetailResult = await new Promise((resolve, reject) => {
-          poolInsentif.query(getQuery, (error, results) => {
-            if (error) {
-              console.error(
-                `Error executing salesdetail query for salesid "${item.salesid}":`,
-                error
-              );
-              return reject(error);
-            }
-            resolve(results); // Mengembalikan hasil dari salesdetail
-          });
-        });
-        console.log(salesDetailResult);
-        // Menambahkan properti baru 'salesdetail' ke objek item
-        updatedSalesResult.push({
-          ...item,
-          salesdetail: salesDetailResult,
-        });
-      } catch (error) {
-        console.error("Error executing salesdetail query:", error);
-        throw error; // Menghentikan eksekusi saat error terjadi
-      }
-    }
-
-    // console.log(updatedSalesResult);
-    res.json(updatedSalesResult);
-  } catch (error) {
-    console.error("Error executing main query:", error);
     res.status(500).send("Error executing query");
   }
 });

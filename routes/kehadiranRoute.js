@@ -4,6 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const bodyParser = require("body-parser");
+const { DendaPulangCepat } = require("./utils");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -144,6 +145,8 @@ router.post("/", function (req, res, next) {
     is_lanjut_shift,
     is_dokter_pengganti,
     nama_dokter_pengganti,
+    nama_petugas,
+    keterangan,
     lokasiAbsen,
   } = req.body;
 
@@ -159,7 +162,7 @@ router.post("/", function (req, res, next) {
       res.status(500).json({ message: "Gagal menyimpan foto" });
     }
     const insertQuery =
-      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti, lokasi_absen) VALUES ('" +
+      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti,nama_petugas, lokasi_absen, keterangan) VALUES ('" +
       barcode +
       "','" +
       id_jadwal +
@@ -182,7 +185,11 @@ router.post("/", function (req, res, next) {
       "','" +
       nama_dokter_pengganti +
       "','" +
+      nama_petugas +
+      "','" +
       lokasiAbsen +
+      "','" +
+      keterangan +
       "')";
 
     connection.query(insertQuery, (error, result) => {
@@ -215,7 +222,7 @@ router.post("/", function (req, res, next) {
 // Absen pulang
 router.patch("/:id_kehadiran", function (req, res, next) {
   const { id_kehadiran } = req.params;
-  const { foto_keluar, jam_masuk, jam_keluar, isIzin } = req.body;
+  const { foto_keluar, jam_masuk, jam_keluar, isIzin, ket } = req.body;
   console.log("masuk chat");
   const sendMessageToTelegram = async (message) => {
     try {
@@ -270,8 +277,8 @@ router.patch("/:id_kehadiran", function (req, res, next) {
     const seconds = ("0" + date.getSeconds()).slice(-2);
 
     const jamMasukBaru = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-    const updateQuery = `UPDATE kehadiran k JOIN shift s ON k.id_shift = s.id_shift SET k.foto_keluar = '${fileName}', k.jam_keluar = NOW(), k.durasi = TIMESTAMPDIFF(MINUTE, s.jam_masuk, s.jam_pulang), k.lembur = 0 WHERE k.id_kehadiran = '${id_kehadiran}';`;
+    console.log("jam Baru", jamMasukBaru);
+    const updateQuery = `UPDATE kehadiran k JOIN shift s ON k.id_shift = s.id_shift SET k.foto_keluar = '${fileName}', k.jam_keluar = NOW(), k.durasi = TIMESTAMPDIFF(MINUTE, s.jam_masuk, s.jam_pulang), k.lembur = 0 , k.keterangan = '${ket}'WHERE k.id_kehadiran = '${id_kehadiran}';`;
 
     connection.query(updateQuery, (error, result) => {
       if (error) {
@@ -280,15 +287,16 @@ router.patch("/:id_kehadiran", function (req, res, next) {
       }
 
       const selectQuery = `SELECT 
-      kehadiran.id_detail_jadwal, kehadiran.jam_masuk,
+      kehadiran.id_detail_jadwal, kehadiran.jam_masuk,detail_jadwal.tanggal,
       kehadiran.barcode, kehadiran.lokasi_absen,
-      pegawai.nama, 
+      pegawai.nama, pegawai.jbtn,pegawai.nik,
       kehadiran.jam_keluar, 
       kehadiran.id_shift, 
       shift.jam_pulang,
       shift.nominal,
       setting.nama_instansi FROM kehadiran
       JOIN shift ON kehadiran.id_shift = shift.id_shift
+      JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
       JOIN barcode ON kehadiran.barcode = barcode.barcode
       JOIN pegawai ON barcode.id = pegawai.id
       CROSS JOIN setting
@@ -305,16 +313,13 @@ router.patch("/:id_kehadiran", function (req, res, next) {
         console.log(selectQuery);
         console.log({ data: resultSelect[0] });
         const dateString = resultSelect[0].jam_keluar;
-        const date = new Date(dateString);
-        const jam = date.getHours();
-        const menit = date.getMinutes();
-        const detik = date.getSeconds();
+        const [jam, menit, detik] = dateString.split(":");
         console.log(`Jam: ${jam}, Menit: ${menit}, Detik: ${detik}`);
 
         const id_detail_jadwal = resultSelect[0].id_detail_jadwal;
         const jam_absen_pulang = `${jam}:${menit}:${detik}`;
         const jam_pulang = resultSelect[0].jam_pulang;
-        const tanggalMasuk = formatTanggal(resultSelect[0].jam_masuk);
+        const tanggalMasuk = resultSelect[0].tanggal;
         const tanggalKeluar = getToday();
         // Pisahkan jam, menit, dan detik untuk setiap waktu
         const [jam1, menit1, detik1] = jam_absen_pulang.split(":").map(Number);
@@ -326,6 +331,10 @@ router.patch("/:id_kehadiran", function (req, res, next) {
 
         // Hitung selisih waktu dalam menit
         const selisihMenit = totalMenit2 - totalMenit1;
+        const dendaPulangCepat = DendaPulangCepat(
+          resultSelect[0],
+          selisihMenit
+        );
         console.log(selisihMenit, "selisih");
         const nama = resultSelect[0].nama;
         const nominal = resultSelect[0].nominal;
@@ -336,9 +345,14 @@ router.patch("/:id_kehadiran", function (req, res, next) {
           isPulangCepat = 0;
         } else {
           isPulangCepat = 1;
-          if (tanggalMasuk == tanggalKeluar) {
+
+          if (
+            tanggalMasuk == tanggalKeluar ||
+            (resultSelect[0].nik.includes("PO") &&
+              !resultSelect[0].nik.includes("AP"))
+          ) {
             const message = `${nama} pulang cepat Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2}0 di ${resultSelect[0].lokasi_absen}`;
-            console.log(message, "pesan");
+            console.log("Pesan", message, "pesan");
             if (isIzin == false) {
               sendMessageToTelegram(message);
             }
@@ -353,6 +367,16 @@ router.patch("/:id_kehadiran", function (req, res, next) {
             res.status(500).json({ error: "Internal Server Error" });
             return;
           }
+
+          const updateHadir = `UPDATE kehadiran SET pulangCepat=${selisihMenit}, dendaPulangCepat=${dendaPulangCepat} WHERE id_kehadiran = ${id_kehadiran}`;
+
+          connection.query(updateHadir, (error, resultUpdateHadir) => {
+            if (error) {
+              console.error("Error executing query:", error);
+              res.status(500).json({ error: "Internal Server Error" });
+              return;
+            }
+          });
         });
       });
       console.log("Record updated successfully:", result);

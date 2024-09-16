@@ -54,7 +54,7 @@ router.get("/dokter/:id_kehadiran", function (req, res) {
 
 router.get("/jadwal/:barcode", function (req, res) {
   const { barcode } = req.params;
-  const query = `SELECT detail_jadwal.*, shift.nama_shift, shift.jam_masuk, shift.jam_pulang, pegawai.nama
+  const query = `SELECT detail_jadwal.*, shift.nama_shift, shift.jam_masuk, shift.jam_pulang, pegawai.nama, pegawai.jbtn, pegawai.nik
   FROM detail_jadwal
   JOIN shift ON detail_jadwal.id_shift = shift.id_shift
   JOIN jadwal_kehadiran ON detail_jadwal.id_jadwal = jadwal_kehadiran.id
@@ -68,7 +68,7 @@ router.get("/jadwal/:barcode", function (req, res) {
       console.log("Error executing query", error);
       return res.status(500).json({ error: "Internal Server Error" });
     }
-    const queryBarcode = `SELECT pegawai.nama, barcode.barcode
+    const queryBarcode = `SELECT pegawai.nama, pegawai.nik,pegawai.jbtn,barcode.barcode
     FROM pegawai
     JOIN barcode ON pegawai.id = barcode.id
     WHERE barcode.barcode = ${barcode};`;
