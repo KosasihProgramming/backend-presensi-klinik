@@ -77,7 +77,7 @@ JOIN jadwal_kehadiran jk ON k.id_jadwal = jk.id
 JOIN barcode b ON k.barcode = b.barcode
 JOIN pegawai p ON b.id = p.id
 JOIN shift s ON k.id_shift = s.id_shift
-WHERE LOWER(p.jbtn) LIKE 'dokter%'
+WHERE LOWER(p.jbtn) LIKE 'dokte%'
   AND jk.bulan = ?
   AND jk.tahun = ?
   AND k.foto_keluar IS NOT NULL;

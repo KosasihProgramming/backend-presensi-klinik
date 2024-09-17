@@ -330,11 +330,9 @@ router.patch("/:id_kehadiran", function (req, res, next) {
         const totalMenit2 = jam2 * 60 + menit2 + detik2 / 60;
 
         // Hitung selisih waktu dalam menit
+        let menitPulangCepat = 0;
         const selisihMenit = totalMenit2 - totalMenit1;
-        const dendaPulangCepat = DendaPulangCepat(
-          resultSelect[0],
-          selisihMenit
-        );
+        let dendaPulangCepat = 0;
         console.log(selisihMenit, "selisih");
         const nama = resultSelect[0].nama;
         const nominal = resultSelect[0].nominal;
@@ -342,20 +340,30 @@ router.patch("/:id_kehadiran", function (req, res, next) {
         console.log("tanggal Keluar", tanggalKeluar);
         let isPulangCepat = 0;
         if (selisihMenit <= 0) {
+          menitPulangCepat = 0;
           isPulangCepat = 0;
         } else {
           isPulangCepat = 1;
 
-          if (
-            tanggalMasuk == tanggalKeluar ||
-            (resultSelect[0].nik.includes("PO") &&
-              !resultSelect[0].nik.includes("AP"))
-          ) {
-            const message = `${nama} pulang cepat Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2}0 di ${resultSelect[0].lokasi_absen}`;
+          if (tanggalMasuk == tanggalKeluar) {
+            const message = `${nama} pulang cepat Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2}0 di ${resultSelect[0].lokasi_absen}. Tanggal Masuk : ${tanggalMasuk} Tanggal Pulang : ${tanggalKeluar}`;
             console.log("Pesan", message, "pesan");
             if (isIzin == false) {
-              sendMessageToTelegram(message);
+              if (
+                !resultSelect[0].nik.includes("PO") &&
+                !resultSelect[0].nik.includes("AP")
+              ) {
+                menitPulangCepat = selisihMenit;
+                dendaPulangCepat = DendaPulangCepat(
+                  resultSelect[0],
+                  selisihMenit
+                );
+                sendMessageToTelegram(message);
+              }
             }
+          } else {
+            dendaPulangCepat = 0;
+            menitPulangCepat = 0;
           }
         }
 
@@ -368,7 +376,7 @@ router.patch("/:id_kehadiran", function (req, res, next) {
             return;
           }
 
-          const updateHadir = `UPDATE kehadiran SET pulangCepat=${selisihMenit}, dendaPulangCepat=${dendaPulangCepat} WHERE id_kehadiran = ${id_kehadiran}`;
+          const updateHadir = `UPDATE kehadiran SET pulangCepat=${menitPulangCepat}, dendaPulangCepat=${dendaPulangCepat} WHERE id_kehadiran = ${id_kehadiran}`;
 
           connection.query(updateHadir, (error, resultUpdateHadir) => {
             if (error) {
