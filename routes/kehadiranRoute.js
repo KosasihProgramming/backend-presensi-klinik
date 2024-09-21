@@ -331,7 +331,8 @@ router.patch("/:id_kehadiran", function (req, res, next) {
 
         // Hitung selisih waktu dalam menit
         let menitPulangCepat = 0;
-        const selisihMenit = totalMenit2 - totalMenit1;
+        const seli = totalMenit2 - totalMenit1;
+        const selisihMenit = Math.abs(seli);
         let dendaPulangCepat = 0;
         console.log(selisihMenit, "selisih");
         const nama = resultSelect[0].nama;
@@ -339,14 +340,11 @@ router.patch("/:id_kehadiran", function (req, res, next) {
         console.log("tanggal Masuk", tanggalMasuk);
         console.log("tanggal Keluar", tanggalKeluar);
         let isPulangCepat = 0;
-        if (selisihMenit <= 0) {
-          menitPulangCepat = 0;
-          isPulangCepat = 0;
-        } else {
+        if (selisihMenit > 0) {
           isPulangCepat = 1;
 
           if (tanggalMasuk == tanggalKeluar) {
-            const message = `${nama} pulang cepat Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2}0 di ${resultSelect[0].lokasi_absen}. Tanggal Masuk : ${tanggalMasuk} Tanggal Pulang : ${tanggalKeluar}`;
+            const message = `${nama} pulang cepat Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2}0 di ${resultSelect[0].lokasi_absen}.`;
             console.log("Pesan", message, "pesan");
             if (isIzin == false) {
               if (
@@ -365,6 +363,9 @@ router.patch("/:id_kehadiran", function (req, res, next) {
             dendaPulangCepat = 0;
             menitPulangCepat = 0;
           }
+        } else {
+          menitPulangCepat = 0;
+          isPulangCepat = 0;
         }
 
         const updateQuery = `UPDATE detail_jadwal SET isPulangCepat=${isPulangCepat}, nominal=${nominal} WHERE id = ${id_detail_jadwal}`;
@@ -429,7 +430,7 @@ const getToday = () => {
   const month = String(today.getMonth() + 1).padStart(2, "0"); // Menambahkan leading zero jika bulan kurang dari 10
   const day = String(today.getDate()).padStart(2, "0"); // Menambahkan leading zero jika hari kurang dari 10
 
-  return `${year}-${month}-${day}`;
+  return `${year}/${month}/${day}`;
 };
 
 // Rute untuk menambah izin dengan gambar
@@ -520,14 +521,16 @@ router.post("/absen-izin", function (req, res, next) {
     jam_masuk,
     jam_keluar,
     lokasiAbsen,
+    ket,
+    petugas,
   } = req.body;
 
   const insertQuery = `
     INSERT INTO kehadiran (
       barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, foto_keluar, 
       jam_masuk, jam_keluar, durasi, lembur, telat, denda_telat, 
-      is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti, lokasi_absen
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti, lokasi_absen, keterangan, nama_petugas
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?)
   `;
 
   const insertValues = [
@@ -548,6 +551,8 @@ router.post("/absen-izin", function (req, res, next) {
     0, // is_dokter_pengganti
     "", // nama_dokter_pengganti
     lokasiAbsen,
+    ket,
+    petugas,
   ];
 
   connection.query(insertQuery, insertValues, (error, result) => {

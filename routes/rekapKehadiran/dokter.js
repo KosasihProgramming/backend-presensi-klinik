@@ -100,8 +100,8 @@ WHERE LOWER(p.jbtn) LIKE 'dokte%'
     await Promise.all(
       result.map(async (item) => {
         const insertQuery = `INSERT INTO rekap_hadir_dokter 
-  (tanggal, bulan, tahun, nama_shift, nama_dokter, jbtn, nominal_shift,jam_masuk,jam_pulang, garansi_fee, barcode,salesmanid, denda_telat, denda_pulang_cepat, nama_dokter_pengganti, nama_petugas,telat,pulang_cepat, nominal, total, kekurangan_garansi_fee, createdAt, updatedAt)
-  VALUES (?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?)`;
+  (tanggal, bulan, tahun, nama_shift, nama_dokter, jbtn, nominal_shift,jam_masuk,jam_pulang, garansi_fee, barcode,salesmanid, denda_telat, denda_pulang_cepat, nama_dokter_pengganti, nama_petugas,telat,pulang_cepat, nominal, total, kekurangan_garansi_fee,keterangan, createdAt, updatedAt)
+  VALUES (?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)`;
 
         const currentDate = new Date();
         const values = [
@@ -126,6 +126,7 @@ WHERE LOWER(p.jbtn) LIKE 'dokte%'
           item.nominal,
           (total = item.nominal - item.denda_telat),
           (kekurangan_garansi_fee = item.garansi_fee - total),
+          item.keterangan,
           currentDate,
           currentDate,
         ];
