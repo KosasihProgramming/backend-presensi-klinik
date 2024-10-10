@@ -4,7 +4,7 @@ const path = require("path");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const app = express();
-const port = 5000;
+const port = 5004;
 
 const shift = require("./routes/shiftRoute");
 const jadwal = require("./routes/JadwalRoute");
@@ -26,7 +26,9 @@ const kehadiranPerawatGigi = require("./routes/rekapKehadiran/perawatGigi");
 const kehadiranFarmasi = require("./routes/rekapKehadiran/farmasi");
 const kehadirananalis = require("./routes/rekapKehadiran/analis");
 const kehadiranapoteker = require("./routes/rekapKehadiran/apoteker");
-
+const deviceRouter = require("./routes/device");
+const os = require("os");
+const hostName = os.hostname();
 const kehadiranKantor = require("./routes/rekapKehadiran/pegawaiKantor");
 // Middleware untuk parsing JSON dan form-urlencoded
 app.use(bodyParser.json());
@@ -50,6 +52,7 @@ app.use("/barcode", barcode);
 app.use("/kehadiran", kehadiran);
 app.use("/pegawai", pegawai);
 app.use("/klinik", klinik);
+app.use("/device", deviceRouter);
 app.use("/insentif", insentif);
 app.use("/total-gaji", totalGaji);
 app.use("/insentif-perawat-gigi", insentifPerawatGigi);
@@ -69,6 +72,7 @@ app.use("/rekap-kehadiran-farmasi", kehadiranFarmasi);
 app.use("/rekap-kehadiran-pegawai-kantor", kehadiranKantor);
 
 app.listen(port, () => {
+  console.log("Nama device:", hostName);
   console.log(`Example app listening on port ${port}`);
 });
 

@@ -5,14 +5,14 @@ const router = express.Router();
 
 // Ambil semua data dari tabel kehadiran
 router.post("/cek", async function (req, res, next) {
-  const { bulan, tahun } = req.body;
+  const { bulan, tahun, cabang } = req.body;
 
   if (!bulan || !tahun) {
     res.status(400).send("Bulan dan tahun harus disertakan.");
     return;
   }
 
-  const stringQuery = `SELECT * FROM rekap_hadir_kantor WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `SELECT * FROM rekap_hadir_kantor  WHERE bulan = ? AND tahun = ? AND cabang = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -34,14 +34,14 @@ router.post("/cek", async function (req, res, next) {
 });
 
 router.post("/delete", async function (req, res, next) {
-  const { bulan, tahun } = req.body;
+  const { bulan, tahun, cabang } = req.body;
 
   if (!bulan || !tahun) {
     res.status(400).send("Bulan dan tahun harus disertakan.");
     return;
   }
 
-  const stringQuery = `DELETE FROM rekap_hadir_kantor WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `DELETE FROM rekap_hadir_kantor WHERE bulan = ? AND tahun = ? AND cabang= ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -63,7 +63,7 @@ router.post("/delete", async function (req, res, next) {
 });
 
 router.post("/get", async function (req, res, next) {
-  const { bulan, tahun } = req.body;
+  const { bulan, tahun, cabang } = req.body;
 
   if (!bulan || !tahun) {
     res.status(400).send("Bulan dan tahun harus disertakan.");
@@ -79,12 +79,13 @@ router.post("/get", async function (req, res, next) {
   JOIN shift s ON k.id_shift = s.id_shift
 WHERE LOWER(p.nik) LIKE 'cs%'
 
-    AND jk.bulan = ?
-    AND jk.tahun = ?;`;
+  AND jk.bulan = ?
+    AND jk.tahun = ?
+    AND k.cabang= ?;`;
 
   try {
     const result = await new Promise((resolve, reject) => {
-      connection.query(stringQuery, [bulan, tahun], (error, result) => {
+      connection.query(stringQuery, [bulan, tahun, cabang], (error, result) => {
         if (error) {
           reject(error);
           return;
@@ -99,8 +100,8 @@ WHERE LOWER(p.nik) LIKE 'cs%'
     await Promise.all(
       result.map(async (item) => {
         const insertQuery = `INSERT INTO rekap_hadir_kantor 
-      (tanggal, bulan, tahun, nama_shift, nama_perawat, jbtn, nominal_shift, jam_masuk, jam_keluar,barcode, denda_telat, telat,pulang_cepat, denda_pulang_cepat, total, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?,?,?)`;
+      (tanggal, bulan, tahun, nama_shift, nama_perawat, cabang, jbtn, nominal_shift, jam_masuk, jam_keluar,barcode, denda_telat, telat,pulang_cepat, denda_pulang_cepat, total, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?,?,?,?)`;
 
         const currentDate = new Date();
         const total = item.nominal - item.denda_telat;
@@ -110,6 +111,7 @@ WHERE LOWER(p.nik) LIKE 'cs%'
           tahun,
           item.nama_shift,
           item.nama,
+          item.cabang,
           item.jbtn,
           item.nominal,
           item.jam_masuk,

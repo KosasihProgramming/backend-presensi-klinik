@@ -1,5 +1,18 @@
-const mysql = require("mysql2");
+const mysql = require("mysql");
 
+// Fungsi untuk membuat pool connection
+const createDbPool = (dbConfig) => {
+  return mysql.createPool({
+    connectionLimit: 10, // Batas maksimum koneksi
+    host: dbConfig.host,
+    port: dbConfig.port,
+    user: dbConfig.user,
+    password: dbConfig.password,
+    database: dbConfig.database,
+  });
+};
+
+// Konfigurasi database
 const dbKemiling = {
   host: "202.157.189.177",
   port: "3306",
@@ -96,53 +109,32 @@ const dbPalapa = {
   database: "acc_palapa",
 };
 
-const poolKemiling = mysql.createPool(dbKemiling);
-const connectionKemiling = poolKemiling.promise();
+// Membuat pool untuk setiap database
+const poolKemiling = createDbPool(dbKemiling);
+const poolGtsKemiling = createDbPool(dbGtsKemiling);
+const poolGtsTirtayasa = createDbPool(dbGtsTirtayasa);
+const poolGading = createDbPool(dbGading);
+const poolRajabasa = createDbPool(dbRajabasa);
+const poolUrip = createDbPool(dbUrip);
+const poolTugu = createDbPool(dbTugu);
+const poolTirtayasa = createDbPool(dbTirtayasa);
+const poolPanjang = createDbPool(dbPanjang);
+const poolTeluk = createDbPool(dbTeluk);
+const poolBugis = createDbPool(dbBugis);
+const poolPalapa = createDbPool(dbPalapa);
 
-const poolGtsKemiling = mysql.createPool(dbGtsKemiling);
-const connectionGtsKemiling = poolGtsKemiling.promise();
-
-const poolGtsTirtayasa = mysql.createPool(dbGtsTirtayasa);
-const connectionGtsTirtayasa = poolGtsTirtayasa.promise();
-
-const poolGading = mysql.createPool(dbGading);
-const connectionGading = poolGading.promise();
-
-const poolRajabasa = mysql.createPool(dbRajabasa);
-const connectionRajabasa = poolRajabasa.promise();
-
-const poolUrip = mysql.createPool(dbUrip);
-const connectionUrip = poolUrip.promise();
-
-const poolTugu = mysql.createPool(dbTugu);
-const connectionTugu = poolTugu.promise();
-
-const poolTirtayasa = mysql.createPool(dbTirtayasa);
-const connectionTirtayasa = poolTirtayasa.promise();
-
-const poolPanjang = mysql.createPool(dbPanjang);
-const connectionPanjang = poolPanjang.promise();
-
-const poolTeluk = mysql.createPool(dbTeluk);
-const connectionTeluk = poolTeluk.promise();
-
-const poolBugis = mysql.createPool(dbBugis);
-const connectionBugis = poolBugis.promise();
-
-const poolPalapa = mysql.createPool(dbPalapa);
-const connectionPalapa = poolPalapa.promise();
-
+// Ekspor pool koneksi
 module.exports = {
-  connectionKemiling,
-  connectionGtsKemiling,
-  connectionGtsTirtayasa,
-  connectionGading,
-  connectionRajabasa,
-  connectionUrip,
-  connectionTugu,
-  connectionTirtayasa,
-  connectionPanjang,
-  connectionTeluk,
-  connectionBugis,
-  connectionPalapa,
+  poolKemiling,
+  poolGtsKemiling,
+  poolGtsTirtayasa,
+  poolGading,
+  poolRajabasa,
+  poolUrip,
+  poolTugu,
+  poolTirtayasa,
+  poolPanjang,
+  poolTeluk,
+  poolBugis,
+  poolPalapa,
 };

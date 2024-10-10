@@ -1,23 +1,36 @@
 const express = require("express");
 const connection = require("../../config/database");
-const poolInsentif = require("../../config/dbInsentif");
 
+const {
+  poolRajabasa,
+  poolBugis,
+  poolGading,
+  poolGtsKemiling,
+  poolGtsTirtayasa,
+  poolKemiling,
+  poolPalapa,
+  poolPanjang,
+  poolTeluk,
+  poolTirtayasa,
+  poolTugu,
+  poolUrip,
+} = require("../../config/allDatabase");
 const router = express.Router();
 
 // Ambil semua data dari tabel kehadiran
 router.post("/cek", async function (req, res, next) {
-  const { bulan, tahun } = req.body;
+  const { bulan, tahun, cabang } = req.body;
 
   if (!bulan || !tahun) {
     res.status(400).send("Bulan dan tahun harus disertakan.");
     return;
   }
 
-  const stringQuery = `SELECT * FROM rekap_hadir_analis WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `SELECT * FROM rekap_hadir_analis WHERE bulan = ? AND tahun = ? AND cabang=?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
-      connection.query(stringQuery, [bulan, tahun], (error, result) => {
+      connection.query(stringQuery, [bulan, tahun, cabang], (error, result) => {
         if (error) {
           reject(error);
           return;
@@ -35,18 +48,18 @@ router.post("/cek", async function (req, res, next) {
 });
 
 router.post("/delete", async function (req, res, next) {
-  const { bulan, tahun } = req.body;
+  const { bulan, tahun, cabang } = req.body;
 
   if (!bulan || !tahun) {
     res.status(400).send("Bulan dan tahun harus disertakan.");
     return;
   }
 
-  const stringQuery = `DELETE FROM rekap_hadir_analis WHERE bulan = ? AND tahun = ?`;
+  const stringQuery = `DELETE FROM rekap_hadir_analis WHERE bulan = ? AND tahun = ? AND cabang = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
-      connection.query(stringQuery, [bulan, tahun], (error, result) => {
+      connection.query(stringQuery, [bulan, tahun, cabang], (error, result) => {
         if (error) {
           reject(error);
           return;
@@ -64,7 +77,7 @@ router.post("/delete", async function (req, res, next) {
 });
 
 router.post("/get", async function (req, res, next) {
-  const { bulan, tahun } = req.body;
+  const { bulan, tahun, cabang } = req.body;
 
   if (!bulan || !tahun) {
     res.status(400).send("Bulan dan tahun harus disertakan.");
@@ -82,11 +95,12 @@ WHERE LOWER(p.nik) LIKE 'anl%'
 
     AND jk.bulan = ?
     AND jk.tahun = ?
+    AND k.cabang= ?
     AND k.foto_keluar IS NOT NULL;`;
 
   try {
     const result = await new Promise((resolve, reject) => {
-      connection.query(stringQuery, [bulan, tahun], (error, result) => {
+      connection.query(stringQuery, [bulan, tahun, cabang], (error, result) => {
         if (error) {
           reject(error);
           return;
@@ -101,8 +115,8 @@ WHERE LOWER(p.nik) LIKE 'anl%'
     await Promise.all(
       result.map(async (item) => {
         const insertQuery = `INSERT INTO rekap_hadir_analis 
-      (tanggal, bulan, tahun, nama_shift, jam_masuk, jam_keluar, nama_analis,nama_pengganti,nama_petugas, jbtn, nominal_shift, barcode, servicedoerid,denda_telat,denda_pulang_cepat, telat,pulang_cepat, total,total_jam,keterangan, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?,?,?,?,?, ?,?,?,?,?)`;
+      (tanggal, bulan, tahun, nama_shift, jam_masuk, jam_keluar, nama_analis,nama_pengganti,nama_petugas, cabang, jbtn, nominal_shift, barcode, servicedoerid,denda_telat,denda_pulang_cepat, telat,pulang_cepat, total,total_jam,keterangan, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?,?,?,?,?, ?,?,?,?,?,?)`;
 
         const currentDate = new Date();
         const total = item.nominal - item.denda_telat;
@@ -125,6 +139,7 @@ WHERE LOWER(p.nik) LIKE 'anl%'
           item.nama,
           item.nama_dokter_pengganti,
           item.nama_petugas,
+          item.cabang,
           item.jbtn,
           item.nominal,
           item.barcode,
@@ -166,15 +181,20 @@ WHERE LOWER(p.nik) LIKE 'anl%'
   }
 });
 router.post("/get-insentif", async function (req, res, next) {
-  const { tanggal, barcode } = req.body;
+  const { tanggal, barcode, cabang } = req.body;
 
-  if (!tanggal || !barcode) {
-    return res.status(400).send("Bulan dan tahun harus disertakan.");
+  if (!tanggal || !barcode || !cabang) {
+    return res
+      .status(400)
+      .send("Tanggal, barcode, dan cabang harus disertakan.");
   }
 
   const stringQuery = `SELECT * FROM sales WHERE salesdate = "${tanggal}"`;
 
   try {
+    // Pilih pool koneksi berdasarkan cabang
+    const poolInsentif = getPoolByCabang(cabang);
+
     const salesResult = await new Promise((resolve, reject) => {
       poolInsentif.query(stringQuery, (error, result) => {
         if (error) {
@@ -221,7 +241,6 @@ router.post("/get-insentif", async function (req, res, next) {
       }
     }
 
-    // console.log(updatedSalesResult);
     res.json(updatedSalesResult);
   } catch (error) {
     console.error("Error executing main query:", error);
@@ -229,6 +248,36 @@ router.post("/get-insentif", async function (req, res, next) {
   }
 });
 
+const getPoolByCabang = (cabang) => {
+  switch (cabang) {
+    case "Rajabasa":
+      return poolRajabasa;
+    case "Amanah":
+      return poolBugis;
+    case "Gading":
+      return poolGading;
+    case "GTSKemiling":
+      return poolGtsKemiling;
+    case "GTSTirtayasa":
+      return poolGtsTirtayasa;
+    case "Kemiling":
+      return poolKemiling;
+    case "Palapa":
+      return poolPalapa;
+    case "Panjang":
+      return poolPanjang;
+    case "Teluk":
+      return poolTeluk;
+    case "Tirtayasa":
+      return poolTirtayasa;
+    case "Tugu":
+      return poolTugu;
+    case "Urip":
+      return poolUrip;
+    default:
+      throw new Error("Cabang tidak valid atau tidak dikenali.");
+  }
+};
 function calculateTimeDifference(startTime, endTime) {
   // Parsing the time strings into Date objects
   const [startHours, startMinutes, startSeconds] = startTime

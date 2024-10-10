@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const { DendaPulangCepat } = require("./utils");
+const { uploadImageToFirebase } = require("../middleware/uploadImages");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -49,54 +50,76 @@ router.get("/", function (req, res) {
 });
 
 // Ambil semua data kehadiran yang belum pulang
-router.get("/now", function (req, res, next) {
-  const stringQuery =
-    "SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, detail_jadwal.tanggal, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.foto_masuk FROM kehadiran JOIN barcode ON kehadiran.barcode = barcode.barcode JOIN pegawai ON barcode.id = pegawai.id JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id JOIN shift ON kehadiran.id_shift = shift.id_shift WHERE kehadiran.foto_keluar IS NULL";
+router.post("/now", function (req, res, next) {
+  const { cabang } = req.body; // Ambil 'cabang' dari body request
+  if (!cabang) {
+    return res.status(400).send("Cabang harus disertakan.");
+  }
+  console.log("cabang", cabang);
+  const stringQuery = `
+    SELECT kehadiran.id_kehadiran, pegawai.nama, kehadiran.barcode, detail_jadwal.tanggal, 
+    kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.foto_masuk 
+    FROM kehadiran 
+    JOIN barcode ON kehadiran.barcode = barcode.barcode 
+    JOIN pegawai ON barcode.id = pegawai.id 
+    JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id 
+    JOIN shift ON kehadiran.id_shift = shift.id_shift 
+    WHERE kehadiran.foto_keluar IS NULL 
+    AND kehadiran.cabang = ?;
+  `;
 
-  // const query = "SELECT * FROM kehadiran WHERE ";
-
-  connection.query(stringQuery, (error, result) => {
+  // Gunakan parameterized query untuk menghindari SQL injection
+  connection.query(stringQuery, [cabang], (error, result) => {
     if (error) {
       console.log("Error executing query", error);
-      return;
+      return res.status(500).send("Error executing query");
     }
-    console.log("OK");
+    console.log("Query successful");
     res.json(result);
   });
 });
 
 // Ambil data kepulangan hari ini
-router.get("/pulang/all", function (req, res, next) {
-  const stringQuery = `SELECT kehadiran.id_detail_jadwal, detail_jadwal.tanggal, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar 
-  FROM kehadiran 
-  JOIN barcode ON kehadiran.barcode = barcode.barcode 
-  JOIN pegawai ON barcode.id = pegawai.id 
-  JOIN shift ON kehadiran.id_shift = shift.id_shift 
-  JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
-  WHERE kehadiran.foto_keluar IS NOT NULL AND detail_jadwal.tanggal = CURDATE();`;
+router.post("/pulang/all", function (req, res, next) {
+  const { cabang } = req.body; // Ambil 'cabang' dari body request
+  console.log(cabang, "cabang");
+  if (!cabang) {
+    return res.status(400).send("Cabang harus disertakan.");
+  }
 
-  // const query = "SELECT * FROM kehadiran WHERE ";
+  const stringQuery = `
+    SELECT kehadiran.id_detail_jadwal, detail_jadwal.tanggal, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, 
+           kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar 
+    FROM kehadiran 
+    JOIN barcode ON kehadiran.barcode = barcode.barcode 
+    JOIN pegawai ON barcode.id = pegawai.id 
+    JOIN shift ON kehadiran.id_shift = shift.id_shift 
+    JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
+    WHERE kehadiran.foto_keluar IS NOT NULL 
+    AND detail_jadwal.tanggal = CURDATE() 
+    AND kehadiran.cabang = ?;`; // Gunakan parameterized query untuk keamanan
 
-  connection.query(stringQuery, (error, result) => {
+  // Gunakan parameterized query untuk menghindari SQL injection
+  connection.query(stringQuery, [cabang], (error, result) => {
     if (error) {
       console.log("Error executing query", error);
-      return;
+      return res.status(500).send("Error executing query");
     }
-    console.log("OK");
+    console.log("Query successful");
     res.json(result);
   });
 });
 
 // Filter tanggal
-router.get("/filter/:tanggal", function (req, res, next) {
-  const { tanggal } = req.params;
+router.get("/filter/:tanggal/:cabang", function (req, res, next) {
+  const { tanggal, cabang } = req.params;
   const stringQuery = `SELECT kehadiran.id_detail_jadwal, detail_jadwal.tanggal, pegawai.nama, kehadiran.barcode, kehadiran.id_shift, shift.nama_shift, kehadiran.jam_masuk, kehadiran.jam_keluar, kehadiran.foto_masuk, kehadiran.foto_keluar 
   FROM kehadiran 
   JOIN barcode ON kehadiran.barcode = barcode.barcode 
   JOIN pegawai ON barcode.id = pegawai.id 
   JOIN shift ON kehadiran.id_shift = shift.id_shift 
   JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
-  WHERE kehadiran.foto_keluar IS NOT NULL AND detail_jadwal.tanggal = "${tanggal}"`;
+  WHERE kehadiran.foto_keluar IS NOT NULL AND detail_jadwal.tanggal = "${tanggal}" AND kehadiran.cabang = "${cabang}"`;
 
   connection.query(stringQuery, (error, result) => {
     if (error) {
@@ -109,18 +132,25 @@ router.get("/filter/:tanggal", function (req, res, next) {
 });
 
 // Ambil data berdasarkan id
-router.get("/:id_kehadiran", function (req, res) {
-  const { id_kehadiran } = req.params;
+router.post("/presensi", function (req, res) {
+  const { id_kehadiran } = req.body; // Mengambil id_kehadiran dari body request
 
-  const showQuery = `SELECT kehadiran.*, detail_jadwal.tanggal,shift.nama_shift, shift.jam_masuk AS jam_masuk_shift, shift.jam_pulang AS jam_keluar_shift
-  FROM kehadiran
-  JOIN shift ON kehadiran.id_shift = shift.id_shift   JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
-  WHERE kehadiran.id_kehadiran = ${id_kehadiran}`;
+  if (!id_kehadiran) {
+    return res.status(400).send("id_kehadiran harus disertakan.");
+  }
 
-  connection.query(showQuery, (error, result) => {
+  const showQuery = `
+    SELECT kehadiran.*, detail_jadwal.tanggal, shift.nama_shift, 
+           shift.jam_masuk AS jam_masuk_shift, shift.jam_pulang AS jam_keluar_shift
+    FROM kehadiran
+    JOIN shift ON kehadiran.id_shift = shift.id_shift
+    JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
+    WHERE kehadiran.id_kehadiran = ?`; // Menggunakan parameterized query untuk keamanan
+
+  connection.query(showQuery, [id_kehadiran], (error, result) => {
     if (error) {
       console.log("Error executing query", error);
-      return;
+      return res.status(500).send("Error executing query");
     }
     console.log("OK kehadiran");
     res.json(result);
@@ -128,7 +158,7 @@ router.get("/:id_kehadiran", function (req, res) {
 });
 
 // isi data kehadiran (absen datang)
-router.post("/", function (req, res, next) {
+router.post("/", async function (req, res, next) {
   const {
     barcode,
     id_jadwal,
@@ -148,82 +178,75 @@ router.post("/", function (req, res, next) {
     nama_petugas,
     keterangan,
     lokasiAbsen,
+    cabang,
   } = req.body;
 
-  const base64Data = foto_masuk.replace(/^data:image\/\w+;base64,/, "");
-  const buffer = Buffer.from(base64Data, "base64");
+  try {
+    // Menghapus prefix Base64 dan konversi ke buffer
+    const base64Data = foto_masuk.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
 
-  const fileName = Date.now() + ".jpg"; // Atur nama file sesuai kebutuhan
-  const filePath = path.join("uploads", fileName);
+    // Tentukan nama file berdasarkan timestamp
+    const fileName = Date.now() + ".jpg"; // Atur ekstensi sesuai jenis gambar (jpg dalam hal ini)
 
-  fs.writeFile(filePath, buffer, (err) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ message: "Gagal menyimpan foto" });
-    }
+    // Fungsi untuk mengunggah gambar ke Firebase
+    const downloadURL = await uploadImageToFirebase(buffer, fileName);
+
+    // Lanjutkan dengan penyimpanan data ke database, menggunakan downloadURL dari Firebase
     const insertQuery =
-      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti,nama_petugas, lokasi_absen, keterangan) VALUES ('" +
-      barcode +
-      "','" +
-      id_jadwal +
-      "','" +
-      id_detail_jadwal +
-      "','" +
-      id_shift +
-      "','" +
-      fileName +
-      "', NOW(),'" +
-      telat +
-      "','" +
-      denda_telat +
-      "','" +
-      is_pindah_klinik +
-      "','" +
-      is_lanjut_shift +
-      "','" +
-      is_dokter_pengganti +
-      "','" +
-      nama_dokter_pengganti +
-      "','" +
-      nama_petugas +
-      "','" +
-      lokasiAbsen +
-      "','" +
-      keterangan +
-      "')";
+      "INSERT INTO kehadiran (barcode, id_jadwal, id_detail_jadwal, id_shift,cabang, foto_masuk, jam_masuk, telat, denda_telat, is_pindah_klinik, is_lanjut_shift, is_dokter_pengganti, nama_dokter_pengganti,nama_petugas, lokasi_absen, keterangan) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    connection.query(insertQuery, (error, result) => {
-      if (error) {
-        console.error("Error executing query:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
-      }
-      let isTelat = 0;
-      if (telat > 0) {
-        isTelat = 1;
-      } else {
-        isTelat = 0;
-      }
-      const updateQuery = `UPDATE detail_jadwal SET isHadir=1,isTelat=${isTelat} WHERE id = ${id_detail_jadwal}`;
-
-      connection.query(updateQuery, (error, result) => {
+    connection.query(
+      insertQuery,
+      [
+        barcode,
+        id_jadwal,
+        id_detail_jadwal,
+        id_shift,
+        cabang,
+        downloadURL, // Simpan URL Firebase di database
+        telat,
+        denda_telat,
+        is_pindah_klinik,
+        is_lanjut_shift,
+        is_dokter_pengganti,
+        nama_dokter_pengganti,
+        nama_petugas,
+        lokasiAbsen,
+        keterangan,
+      ],
+      (error, result) => {
         if (error) {
           console.error("Error executing query:", error);
           res.status(500).json({ error: "Internal Server Error" });
           return;
         }
-        console.log("New record created:", result);
-        res.status(201).json({ message: "Data berhasil ditambahkan" });
-      });
-    });
-  });
+
+        let isTelat = telat > 0 ? 1 : 0;
+        const updateQuery = `UPDATE detail_jadwal SET isHadir=1,isTelat=${isTelat} WHERE id = ${id_detail_jadwal}`;
+
+        connection.query(updateQuery, (error, result) => {
+          if (error) {
+            console.error("Error executing query:", error);
+            res.status(500).json({ error: "Internal Server Error" });
+            return;
+          }
+          console.log("New record created:", result);
+          res.status(201).json({ message: "Data berhasil ditambahkan" });
+        });
+      }
+    );
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res.status(500).json({ message: "Gagal memproses permintaan" });
+  }
 });
 
 // Absen pulang
-router.patch("/:id_kehadiran", function (req, res, next) {
+router.patch("/:id_kehadiran", async function (req, res, next) {
   const { id_kehadiran } = req.params;
   const { foto_keluar, jam_masuk, jam_keluar, isIzin, ket } = req.body;
-  console.log("masuk chat");
+
   const sendMessageToTelegram = async (message) => {
     try {
       const botToken = "bot6823587684:AAE4Ya6Lpwbfw8QxFYec6xAqWkBYeP53MLQ";
@@ -254,17 +277,17 @@ router.patch("/:id_kehadiran", function (req, res, next) {
       console.error("Error:", error);
     }
   };
-  const base64Data = foto_keluar.replace(/^data:image\/\w+;base64,/, "");
-  const buffer = Buffer.from(base64Data, "base64");
 
-  const fileName = Date.now() + ".jpg"; // Atur nama file sesuai kebutuhan
-  const filePath = path.join("uploads", fileName);
+  try {
+    // Mengubah base64 menjadi buffer
+    const base64Data = foto_keluar.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
 
-  fs.writeFile(filePath, buffer, (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Gagal menyimpan foto" });
-    }
+    // Tentukan nama file berdasarkan timestamp
+    const fileName = Date.now() + ".jpg";
+
+    // Upload ke Firebase dan dapatkan URL-nya
+    const downloadURL = await uploadImageToFirebase(buffer, fileName);
 
     const dateTimeString = jam_masuk;
     const date = new Date(dateTimeString);
@@ -278,7 +301,12 @@ router.patch("/:id_kehadiran", function (req, res, next) {
 
     const jamMasukBaru = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     console.log("jam Baru", jamMasukBaru);
-    const updateQuery = `UPDATE kehadiran k JOIN shift s ON k.id_shift = s.id_shift SET k.foto_keluar = '${fileName}', k.jam_keluar = NOW(), k.durasi = TIMESTAMPDIFF(MINUTE, s.jam_masuk, s.jam_pulang), k.lembur = 0 , k.keterangan = '${ket}'WHERE k.id_kehadiran = '${id_kehadiran}';`;
+
+    // Simpan URL dari Firebase ke dalam database
+    const updateQuery = `UPDATE kehadiran k JOIN shift s ON k.id_shift = s.id_shift 
+      SET k.foto_keluar = '${downloadURL}', k.jam_keluar = NOW(), k.durasi = TIMESTAMPDIFF(MINUTE, s.jam_masuk, s.jam_pulang), 
+      k.lembur = 0 , k.keterangan = '${ket}' 
+      WHERE k.id_kehadiran = '${id_kehadiran}';`;
 
     connection.query(updateQuery, (error, result) => {
       if (error) {
@@ -287,21 +315,21 @@ router.patch("/:id_kehadiran", function (req, res, next) {
       }
 
       const selectQuery = `SELECT 
-      kehadiran.id_detail_jadwal, kehadiran.jam_masuk,detail_jadwal.tanggal,
-      kehadiran.barcode, kehadiran.lokasi_absen,
-      pegawai.nama, pegawai.jbtn,pegawai.nik,
-      kehadiran.jam_keluar, 
-      kehadiran.id_shift, 
-      shift.jam_pulang,
-      shift.nominal,
-      setting.nama_instansi FROM kehadiran
-      JOIN shift ON kehadiran.id_shift = shift.id_shift
-      JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
-      JOIN barcode ON kehadiran.barcode = barcode.barcode
-      JOIN pegawai ON barcode.id = pegawai.id
-      CROSS JOIN setting
-      WHERE kehadiran.id_kehadiran = ${id_kehadiran};
-  `;
+        kehadiran.id_detail_jadwal, kehadiran.jam_masuk,detail_jadwal.tanggal,
+        kehadiran.barcode, kehadiran.lokasi_absen,
+        pegawai.nama, pegawai.jbtn,pegawai.nik,
+        kehadiran.jam_keluar, 
+        kehadiran.id_shift, 
+        shift.jam_pulang,
+        shift.nominal,
+        setting.nama_instansi 
+        FROM kehadiran
+        JOIN shift ON kehadiran.id_shift = shift.id_shift
+        JOIN detail_jadwal ON kehadiran.id_detail_jadwal = detail_jadwal.id
+        JOIN barcode ON kehadiran.barcode = barcode.barcode
+        JOIN pegawai ON barcode.id = pegawai.id
+        CROSS JOIN setting
+        WHERE kehadiran.id_kehadiran = ${id_kehadiran};`;
 
       connection.query(selectQuery, (error, resultSelect) => {
         if (error) {
@@ -309,6 +337,7 @@ router.patch("/:id_kehadiran", function (req, res, next) {
           res.status(500).json({ error: "Internal Server Error" });
           return;
         }
+
         const namaInstansi = resultSelect[0].nama_instansi;
         console.log(selectQuery);
         console.log({ data: resultSelect[0] });
@@ -321,20 +350,17 @@ router.patch("/:id_kehadiran", function (req, res, next) {
         const jam_pulang = resultSelect[0].jam_pulang;
         const tanggalMasuk = resultSelect[0].tanggal;
         const tanggalKeluar = getToday();
-        // Pisahkan jam, menit, dan detik untuk setiap waktu
+
         const [jam1, menit1, detik1] = jam_absen_pulang.split(":").map(Number);
         const [jam2, menit2, detik2] = jam_pulang.split(":").map(Number);
 
-        // Konversi waktu menjadi total menit
         const totalMenit1 = jam1 * 60 + menit1 + detik1 / 60;
         const totalMenit2 = jam2 * 60 + menit2 + detik2 / 60;
 
-        // Hitung selisih waktu dalam menit
         let menitPulangCepat = 0;
-        const seli = totalMenit2 - totalMenit1;
-        const selisihMenit = Math.abs(seli);
+        const selisihMenit = Math.abs(totalMenit2 - totalMenit1);
         let dendaPulangCepat = 0;
-        console.log(selisihMenit, "selisih");
+
         const nama = resultSelect[0].nama;
         const nominal = resultSelect[0].nominal;
         console.log("tanggal Masuk", tanggalMasuk);
@@ -344,19 +370,25 @@ router.patch("/:id_kehadiran", function (req, res, next) {
           isPulangCepat = 1;
 
           if (tanggalMasuk == tanggalKeluar) {
-            const message = `${nama} pulang cepat Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2}0 di ${resultSelect[0].lokasi_absen}.`;
+            const message = `${nama} pulang cepat ${selisihMenit} Menit Pada Pukul ${jam1}:${menit1} sebelum Pukul ${jam2}:${menit2} di ${resultSelect[0].lokasi_absen}.`;
             console.log("Pesan", message, "pesan");
             if (isIzin == false) {
               if (
                 !resultSelect[0].nik.includes("PO") &&
                 !resultSelect[0].nik.includes("AP")
               ) {
-                menitPulangCepat = selisihMenit;
-                dendaPulangCepat = DendaPulangCepat(
-                  resultSelect[0],
-                  selisihMenit
+                const cekJam = isTimeGreater(
+                  `${jam2}:${menit2}`,
+                  `${jam1}:${menit1}`
                 );
-                sendMessageToTelegram(message);
+                if (cekJam == true) {
+                  menitPulangCepat = selisihMenit;
+                  dendaPulangCepat = DendaPulangCepat(
+                    resultSelect[0],
+                    selisihMenit
+                  );
+                  sendMessageToTelegram(message);
+                }
               }
             }
           } else {
@@ -388,10 +420,14 @@ router.patch("/:id_kehadiran", function (req, res, next) {
           });
         });
       });
+
       console.log("Record updated successfully:", result);
       res.status(200).json({ message: "Data berhasil diperbarui" });
     });
-  });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res.status(500).json({ message: "Gagal memproses permintaan" });
+  }
 });
 
 // Hapus data
@@ -595,4 +631,12 @@ router.get("/izin/today", function (req, res, next) {
   });
 });
 
+function isTimeGreater(jamA, jamB) {
+  // Mengubah string waktu ke dalam bentuk Date object
+  const timeA = new Date(`1970-01-01T${jamA}:00`);
+  const timeB = new Date(`1970-01-01T${jamB}:00`);
+
+  // Membandingkan apakah timeA lebih besar dari timeB
+  return timeA > timeB;
+}
 module.exports = router;

@@ -1,13 +1,11 @@
 const mysql = require("mysql");
 
 const dbConfig = {
-  host: "localhost",
-  // user: "klinikko_adminsik",
-  // password: "4Wd4b!k4tt!",
-  // database: "klinikko_sik",
-  user: "root",
-  password: "",
-  database: "sik2",
+  host: "202.157.189.177",
+  port: "3306",
+  user: "aris",
+  password: "Kosasih20!8",
+  database: "presensi_klinik",
 };
 
 const connection = mysql.createConnection(dbConfig);
